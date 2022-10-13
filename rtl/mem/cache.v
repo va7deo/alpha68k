@@ -29,7 +29,7 @@ module cache
     input clk,
 
     input cache_req,
-    input [16:0] cache_addr,
+    input [17:0] cache_addr,
 
     output reg cache_valid,
     output [15:0] cache_data,
@@ -38,11 +38,11 @@ module cache
     input  rom_valid,
     
     output reg rom_req,
-    output reg [16:0] rom_addr
+    output reg [17:0] rom_addr
 );
 
 
-reg [16:9]   tag   [511:0];
+reg [17:9]   tag   [511:0];
 reg [511:0]  valid ;
 reg [1:0]    state = 0;
 
@@ -53,7 +53,7 @@ wire hit;
 
 // if tag value matches the upper bits of the address 
 // and valid then no need to pass request to sdram 
-assign hit = ( tag[idx] == cache_addr[16:9] && valid[idx] == 1 && state == 1 );
+assign hit = ( tag[idx] == cache_addr[17:9] && valid[idx] == 1 && state == 1 );
 
 
 assign cache_data = ( hit == 1 ) ? cache_dout : rom_data;
@@ -88,7 +88,7 @@ always @ (posedge clk) begin
             end else if ( state == 2 && rom_valid == 1 ) begin
 
                 // write updated tag
-                tag[idx_r] <= rom_addr[16:9];
+                tag[idx_r] <= rom_addr[17:9];
                 // mark tag valid
                 valid[idx_r] <= 1'b1;
 
