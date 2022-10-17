@@ -192,7 +192,7 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_MIX = 0;
-assign LED_USER =  | frame_count ;
+assign LED_USER =  | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count } ;
 assign LED_DISK = 0;
 assign LED_POWER = 0;
 assign BUTTONS = 0;
@@ -351,10 +351,10 @@ always @ (posedge clk_sys ) begin
     
     p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
     
-    coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, key_test, key_service } ;
+    coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
     
-    dsw1 <=  16'hffff;
-    dsw2 <=  16'hffff;  
+    dsw1 <=  {8'h00,sw[0][5:0],~key_test,~key_service};
+    dsw2 <=  {8'h00,sw[1][1:0], sw[1][7:2] };  // sw[1][1:0] not used? debugging
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -809,8 +809,13 @@ always @ (posedge clk_sys) begin
         end else if ( sprite_state == 9 ) begin
             // tile index ready
             sprite_tile_num <= sprite_ram_dout[14:0] ;  // 0x7fff
-            sprite_flip_x   <= 1'b0;  // 0x8000
-            sprite_flip_y   <= sprite_ram_dout[15] ;   // 0x8000
+            if ( pcb == 0 ) begin
+                sprite_flip_x   <= 1'b0;  // 0x8000
+                sprite_flip_y   <= sprite_ram_dout[15] ;   // 0x8000
+            end else begin
+                sprite_flip_x   <= sprite_ram_dout[15] ;   // 0x8000
+                sprite_flip_y   <= 1'b0;  // 0x8000
+            end
             spr_x_ofs <= 0;
             spr_x_pos <= { sprite_col_x[7:0], sprite_col_y[15] } ;
             sprite_state <= 10;
@@ -942,11 +947,15 @@ always @ (posedge clk_sys) begin
         tile_bank <= 0;
         frame_count <= 0;
         
+        mcu_addr <= 0;
+        mcu_din <= 0 ;
+        mcu_wh <= 0;
+        mcu_wl <= 0;
+                
         z80_latch <= 0;        
         z80_nmi_n <= 1 ;
         z80_bank <= 0;
         z80_nmi_suppress <= 1; // ym2203 port high impedance on reset?
-
     end else begin
     
         // vblank handling 
@@ -965,6 +974,15 @@ always @ (posedge clk_sys) begin
         end         
 
         if ( clk_20M == 1 ) begin
+            // cpu acknowledged the interrupt
+            if ( ( m68k_as_n == 0 ) && ( m68k_fc == 3'b111 ) ) begin
+                m68k_ipl0_n <= 1;
+                m68k_ipl1_n <= 1;
+            end
+            
+            mcu_wh <= 0;
+            mcu_wl <= 0;
+
             // tell 68k to wait for valid data. 0=ready 1=wait
             // always ack when it's not program rom
             m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid : 
@@ -993,14 +1011,47 @@ always @ (posedge clk_sys) begin
                 // reads
                 m68k_din <=  m68k_rom_cs ? m68k_rom_data :
                              m68k_ram_cs  ? m68k_ram_dout :
+                             m68k_rom_2_cs ? m68k_rom_2_data :
                              // high byte of even addressed sprite ram not connected.  pull high.
                              m68k_spr_cs  ? m68k_sprite_dout : // 0xff000000
                              m68k_fg_ram_cs ? m68k_fg_ram_dout :
                              m68k_pal_cs ? m68k_pal_dout :
-                             input_dsw2_cs ? dsw2 :
-                             m68k_sp85_cs ? 16'h0000 :
+                             input_p1_cs ? { p2, p1 } :
+                             input_dsw1_cs ? dsw1 :
+                             m68k_sp85_cs ? 0 : 
                              16'h0000;
-                     
+
+                // mcu addresses are word 
+                if ( m68k_sp85_cs == 1 ) begin
+                    if ( m68k_a[8:1] == 8'h00 ) begin
+                        
+                        if ( pcb == 0 ) begin
+                            // sky adv
+                            mcu_addr <= 13'h0000;
+                        end else begin
+                            // gang wars
+                            mcu_addr <= 13'h1f00;
+                        end
+                        mcu_din <= dsw2 ;
+                        mcu_wl <= 1;
+                    end else if ( m68k_a[8:1] == 8'h29 ) begin
+                        // gang wars dip2
+                        mcu_addr <= 13'h0163;
+                        mcu_din <= dsw2 ;
+                        mcu_wh <= 1;
+                    end else if ( m68k_a[8:1] == 8'hfe ) begin
+                        // mcu id hign - gang wars 8512
+                        mcu_addr <= 13'h1ffe;
+                        mcu_din <= 8'h85 ;
+                        mcu_wl <= 1;
+                    end else if ( m68k_a[8:1] == 8'hff ) begin
+                        // mcu id low
+                        mcu_addr <= 13'h1fff;
+                        mcu_din <= 8'h12 ;
+                        mcu_wl <= 1;
+                    end
+                end
+
                 if ( vbl_int_clr_cs == 1 ) begin
                     m68k_ipl0_n <= 1;
                 end 
@@ -1036,7 +1087,7 @@ always @ (posedge clk_sys) begin
             end 
         end
         
-        if ( clk_4M == 1 ) begin
+        if ( clk_6M == 1 ) begin
 
             z80_wait_n <= 1;
             
@@ -1044,11 +1095,16 @@ always @ (posedge clk_sys) begin
                 // Z80 READ
 
                 if ( z80_banked_cs == 1 ) begin
-                    if ( z80_banked_valid ) begin
-                        z80_din <= z80_banked_data;
-                    end else begin
-                        z80_wait_n <= 0;
-                    end
+                    // testing -- most of attract runs from bank 2
+//                    if ( z80_bank == 2 ) begin
+//                        z80_din <= z80_rom_2_data;
+//                    end else begin
+                        if ( z80_banked_valid ) begin
+                            z80_din <= z80_banked_data;
+                        end else begin
+                            z80_wait_n <= 0;
+                        end
+//                    end
                 end else if ( z80_ram_cs == 1 ) begin
                     z80_din <= z80_ram_data ;
                 end else if ( z80_rom_cs == 1 ) begin
@@ -1128,6 +1184,7 @@ wire    vbl_int_clr_cs;
 wire    cpu_int_clr_cs;
 wire    watchdog_clr_cs;
 wire    m68k_sp85_cs;
+wire    m68k_coin_cs;
 
 wire    z80_rom_cs;
 wire    z80_ram_cs;
@@ -1171,6 +1228,7 @@ chip_select cs (
     .input_p1_cs,
     .input_dsw1_cs,
     .input_dsw2_cs,
+    .m68k_coin_cs,
 
     // interrupt clear & watchdog
     .vbl_int_clr_cs,
@@ -1268,7 +1326,7 @@ fx68k fx68k (
     .BGACKn(1'b1),
     
     .IPL0n(m68k_ipl0_n),
-    .IPL1n(m68k_ipl1_n), 
+    .IPL1n(m68k_ipl0_n),  // should be m68k_ipl1_n
     .IPL2n(1'b1),
 
     // busses
@@ -1280,6 +1338,7 @@ fx68k fx68k (
 
 // z80 audio 
 wire    [7:0] z80_rom_data;
+wire    [7:0] z80_rom_2_data;
 wire    [7:0] z80_banked_data;
 wire    [7:0] z80_ram_data;
 
@@ -1301,8 +1360,8 @@ wire M1_n;
 T80pa z80 (
     .RESET_n    ( ~reset ),
     .CLK        ( clk_sys ),
-    .CEN_p      ( clk_4M ),
-    .CEN_n      ( ~clk_4M ),
+    .CEN_p      ( clk_6M ),
+    .CEN_n      ( ~clk_6M ),
     .WAIT_n     ( z80_wait_n ), // z80_wait_n
     .INT_n      ( 1'b1 ),  
     .NMI_n      ( z80_nmi_n ),
@@ -1349,7 +1408,7 @@ assign AUDIO_S = 1'b1 ;
 wire opll_sample_clk;
 wire opn_sample_clk;
 
-// OPLL (3.57 MHZ)
+// OPLL (3.578 MHZ)
 jt2413 ym2413 (
     .rst(reset),
     .clk(clk_4M),
@@ -1363,26 +1422,38 @@ jt2413 ym2413 (
     .sample(opll_sample_clk)
 );
 
+reg ym2203we ;
+reg [7:0] ym2203_din;
+reg ym2203addr;
+
+always @ (posedge clk_6M) begin
+    ym2203we <= ~z80_ym2203_cs ;
+    ym2203_din <= z80_dout ;
+    ym2203addr <= z80_addr[0] ;
+end
+
 // OPN (3 MHZ)
 jt03 ym2203 (
     .rst(reset),
     .clk(clk_3M), // clock in is signal 1H (6MHz/2)
     .cen(1'b1),
-    .din( z80_dout ),
-    .addr( z80_addr[0] ),
-    .cs_n( ~z80_ym2203_cs ),
-    .wr_n( ~z80_ym2203_cs ), 
+    .din( ym2203_din ),
+    .addr( ym2203addr ),
+    .cs_n( ym2203we ),
+    .wr_n( ym2203we ), 
 
     .snd(opn_sample)
 );
 
-reg  [7:0]  dac ;
-wire [15:0] dac_sample = { ~dac[7], dac[6:0], 8'b0 } ;
+reg  signed  [7:0] dac ;
+wire signed [15:0] dac_sample = ( dac <<< 8 ) ;
 
 always @ * begin
     // mix audio
     AUDIO_L <= ( opn_sample + dac_sample ) >>> 1; 
     AUDIO_R <= ( opn_sample + dac_sample ) >>> 1;
+//    AUDIO_L <= opn_sample ; 
+//    AUDIO_R <= opn_sample ;
 end
 
 reg [16:0] gfx1_addr;
@@ -1398,8 +1469,15 @@ wire [15:0] m68k_pal_dout;
 // ioctl download addressing    
 wire rom_download = ioctl_download && (ioctl_index==0);
 
-wire fg_ioctl_wr  = rom_download & ioctl_wr & (ioctl_addr >= 24'h100000) & (ioctl_addr < 24'h110000) ;
-wire z80_ioctl_wr = rom_download & ioctl_wr & (ioctl_addr >= 24'h080000) & (ioctl_addr < 24'h088000) ;
+wire fg_ioctl_wr    = rom_download & ioctl_wr & (ioctl_addr >= 24'h100000) & (ioctl_addr < 24'h110000) ;
+wire z80_ioctl_wr   = rom_download & ioctl_wr & (ioctl_addr >= 24'h080000) & (ioctl_addr < 24'h088000) ;
+wire z80_ioctl_2_wr = rom_download & ioctl_wr & (ioctl_addr >= 24'h088000) & (ioctl_addr < 24'h090000) ;
+
+reg [12:0]  mcu_addr;
+reg  [7:0]  mcu_din;
+reg  [7:0]  mcu_dout;
+reg         mcu_wh;
+reg         mcu_wl;
 
 // main 68k ram high    
 dual_port_ram #(.LEN(8192)) ram8kx8_H (
@@ -1407,7 +1485,14 @@ dual_port_ram #(.LEN(8192)) ram8kx8_H (
     .address_a ( m68k_a[13:1] ),
     .wren_a ( !m68k_rw & m68k_ram_cs & !m68k_uds_n ),
     .data_a ( m68k_dout[15:8]  ),
-    .q_a (  m68k_ram_dout[15:8] ) 
+    .q_a (  m68k_ram_dout[15:8] ),
+    
+    .clock_b ( clk_sys ),
+    .address_b ( mcu_addr ),  
+    .wren_b ( mcu_wh ),
+    .data_b ( mcu_din ),
+    .q_b( mcu_dout )
+
     );
 
 // main 68k ram low     
@@ -1416,7 +1501,13 @@ dual_port_ram #(.LEN(8192)) ram8kx8_L (
     .address_a ( m68k_a[13:1] ),
     .wren_a ( !m68k_rw & m68k_ram_cs & !m68k_lds_n ),
     .data_a ( m68k_dout[7:0]  ),
-    .q_a ( m68k_ram_dout[7:0] ) 
+    .q_a ( m68k_ram_dout[7:0] ),
+    
+    .clock_b ( clk_sys ),
+    .address_b ( mcu_addr ),  
+    .wren_b ( mcu_wl ),
+    .data_b ( mcu_din ),
+    .q_b( mcu_dout )
     );
 
 reg  [13:0] sprite_ram_addr;
@@ -1555,7 +1646,7 @@ wire [18:0] z80_rom_addr = { z80_bank[4:0], z80_addr[13:0] }; // ( z80_rom_cs ==
 
 // sky adventure 
 dual_port_ram #(.LEN(32768)) z80_rom (
-    .clock_a ( clk_4M ),
+    .clock_a ( clk_6M ),
     .address_a ( z80_addr[14:0] ),   
     .wren_a ( 1'b0 ),
     .data_a ( ),
@@ -1568,9 +1659,23 @@ dual_port_ram #(.LEN(32768)) z80_rom (
     .q_b( )
     );
     
+dual_port_ram #(.LEN(32768)) z80_rom_bank2 (
+    .clock_a ( clk_6M ),
+    .address_a ( z80_addr[14:0] ),   
+    .wren_a ( 1'b0 ),
+    .data_a ( ),
+    .q_a ( z80_rom_2_data[7:0] ),
+    
+    .clock_b ( clk_sys ),
+    .address_b ( ioctl_addr[14:0] ),
+    .wren_b ( z80_ioctl_2_wr ),
+    .data_b ( ioctl_dout  ),
+    .q_b( )
+    );
+    
 // z80 ram 
 dual_port_ram #(.LEN(2048)) z80_ram (
-    .clock_b ( clk_4M ), 
+    .clock_b ( clk_6M ), 
     .address_b ( z80_addr[10:0] ),
     .wren_b ( z80_ram_cs & ~z80_wr_n ),
     .data_b ( z80_dout ),
@@ -1712,7 +1817,34 @@ wire        prog_cache_rom_cs;
 wire [15:0] prog_cache_data;
 wire        prog_cache_valid;    
 wire [23:1] prog_cache_addr;
-    
+
+wire        sound_cache_rom_cs;    
+wire [7:0]  sound_cache_data;
+wire        sound_cache_valid;    
+wire [23:1] sound_cache_addr;
+
+reg  [39:0] global_count;
+reg  [23:0] rom_count;
+reg  [23:0] rom_2_count;
+reg  [23:0] sprite_count;
+reg  [23:0] sound_count;
+
+//always @ (posedge clk_sys) begin
+//    if ( reset == 1 ) begin
+//        global_count <= 0;
+//        rom_count <= 0;
+//        rom_2_count <= 0;
+//        sprite_count <= 0;
+//        sound_count <= 0;
+//    end else begin
+//        global_count <= global_count + 1;
+//        rom_count    <= ( prog_cache_rom_cs == 0 || prog_cache_valid   == 1 ) ? rom_count : rom_count + 1;
+//        rom_2_count  <= ( m68k_rom_2_cs == 0     || m68k_rom_2_valid   == 1 ) ? rom_2_count : rom_2_count + 1;;
+//        sprite_count <= ( sprite_cache_cs == 0   || sprite_cache_valid == 1 ) ? sprite_count : sprite_count + 1;;
+//        sound_count  <= ( z80_banked_cs == 0     || z80_banked_valid   == 1 ) ? sound_count : sound_count + 1;;
+//    end
+//end
+
 rom_controller rom_controller 
 (
     .reset(reset),
@@ -1753,11 +1885,18 @@ rom_controller rom_controller
     .sprite_rom_data_valid(sprite_cache_valid),
     
     // sound ROM interface
-    .sound_rom_cs(z80_banked_cs),
+//    .sound_rom_cs(z80_banked_cs),
+//    .sound_rom_oe(1),
+//    .sound_rom_addr(z80_rom_addr),
+//    .sound_rom_data(z80_banked_data),
+//    .sound_rom_data_valid(z80_banked_valid),   
+
+    // to rom controller
+    .sound_rom_cs(sound_cache_rom_cs),
     .sound_rom_oe(1),
-    .sound_rom_addr(z80_rom_addr),
-    .sound_rom_data(z80_banked_data),
-    .sound_rom_data_valid(z80_banked_valid),   
+    .sound_rom_addr(sound_cache_addr),
+    .sound_rom_data(sound_cache_data),
+    .sound_rom_data_valid(sound_cache_valid),
 
     // IOCTL interface
     .ioctl_addr(ioctl_addr),
@@ -1810,6 +1949,25 @@ tile_cache tile_cache
     .rom_addr(sprite_cache_addr),
     .rom_data(sprite_cache_data),
     .rom_valid(sprite_cache_valid)
+
+); 
+
+sound_cache sound_cache
+(
+    .clk(clk_sys),
+    .reset(reset),
+
+    // client
+    .cache_req(z80_banked_cs),
+    .cache_addr(z80_rom_addr),
+    .cache_data(z80_banked_data),
+    .cache_valid(z80_banked_valid),
+
+    // to rom controller
+    .rom_req(sound_cache_rom_cs),
+    .rom_addr(sound_cache_addr),
+    .rom_data(sound_cache_data),
+    .rom_valid(sound_cache_valid)
 
 ); 
 

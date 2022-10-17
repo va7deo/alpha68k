@@ -138,7 +138,7 @@ segment
 
 segment 
 #(
-    .ROM_ADDR_WIDTH(17), // 0x20000 x 16 words = 512k
+    .ROM_ADDR_WIDTH(18), 
     .ROM_DATA_WIDTH(16),
     .ROM_OFFSET(24'h040000)
 ) prog_rom_2_segment 

@@ -24,6 +24,7 @@ module chip_select
     output reg m68k_pal_cs,
     output reg m68k_fg_ram_cs,
     output reg m68k_sp85_cs,
+    output reg m68k_coin_cs,
 
     output reg input_p1_cs,
     output reg input_p2_cs,
@@ -81,30 +82,29 @@ localparam TIMESOLD    = 2;
 always @ (*) begin
     // Memory mapping based on PCB type
     case (pcb)
-        SKYADV: begin
+        SKYADV, GANGWARS, TIMESOLD: begin
             //	map(0x000000, 0x03ffff).rom();
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
             
             //	map(0x040000, 0x043fff).ram().share("shared_ram");
-            m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h043fff ) ; 
+            m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h043fff ) ;
             
             //	map(0x080001, 0x080001).w(m_soundlatch, FUNC(generic_latch_8_device::write)); 0x80001  
             m68k_latch_cs    <= m68k_cs( 24'h080000, 24'h080001 ) & !m68k_rw ;
             
             input_p1_cs      <= m68k_cs( 24'h080000, 24'h080001 ) & m68k_rw ;
             
-            input_p2_cs      <= m68k_cs( 24'h080002, 24'h080003 ) ;
+            input_p2_cs      <= 0 ;
 
             input_coin_cs    <= m68k_cs( 24'h080004, 24'h080005 ) ;
             
             
 //            m68k_spr_flip_cs <= m68k_cs( 24'h0c0000, 24'h0c0001 );
             
-            input_dsw1_cs    <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ;
+//                <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ;
             
             //	map(0x0c0000, 0x0c0001).lr16(NAME([this] () -> u16 { return m_in[3]->read(); })); /* Dip 2 */
-            input_dsw2_cs     <= m68k_cs( 24'h0c0000, 24'h0c0001 ) ;
-            
+            input_dsw1_cs     <= m68k_cs( 24'h0c0000, 24'h0c0001 ) ;
             
             //	map(0x100000, 0x100fff).ram().w(FUNC(alpha68k_III_state::videoram_w)).share("videoram");
             m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff )  ;
@@ -113,6 +113,9 @@ always @ (*) begin
             m68k_spr_cs      <= m68k_cs( 24'h200000, 24'h207fff ) ;
             
             //	map(0x300000, 0x303fff).r(FUNC(alpha68k_III_state::alpha_V_trigger_r));
+            input_dsw2_cs    <= 0 ;
+            m68k_coin_cs     <= 0 ;
+            
             m68k_sp85_cs     <= m68k_cs( 24'h300000, 24'h303fff ) ;
             
             //	map(0x400000, 0x401fff).rw(m_palette, FUNC(alpha68k_palette_device::read), FUNC(alpha68k_palette_device::write));
