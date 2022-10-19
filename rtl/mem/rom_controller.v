@@ -180,7 +180,7 @@ segment
 
 segment 
 #(
-    .ROM_ADDR_WIDTH(19), // 0x100000 x 32 words - 4MB
+    .ROM_ADDR_WIDTH(20), // 0x100000 x 32 words - 4MB
     .ROM_DATA_WIDTH(32),
     .ROM_OFFSET(24'h200000)
 ) sprite_rom_segment

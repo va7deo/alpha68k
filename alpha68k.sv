@@ -229,6 +229,7 @@ localparam CONF_STR = {
     "P1-;",
     "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
     "P1O3,Orientation,Horz,Vert;",
+    "P1OGH,First Layer,0,1,2,3;",
     "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
@@ -451,7 +452,7 @@ localparam  CLKSYS=72;
 
 reg [15:0] clk20_count;
 reg  [5:0] clk6_count;
-reg  [5:0] clk4_count;
+reg  [7:0] clk4_count;
 reg  [5:0] clk3_count;
 reg [15:0] clk_upd_count;
 
@@ -470,12 +471,13 @@ always @ (posedge clk_sys) begin
         clk3_count <= clk3_count + 1;
     end
     
-    clk_4M <= ( clk4_count == 0 );
-
-    if ( clk4_count == 17 ) begin // 17
-        clk4_count <= 0;
+    // M=9 / N=181 
+    clk_4M <= 0;
+    if ( clk4_count > 180 ) begin
+        clk_4M <= 1;
+        clk4_count <= clk4_count - 171;
     end else begin
-        clk4_count <= clk4_count + 1;
+        clk4_count <= clk4_count + 9;
     end
     
     clk_6M <= ( clk6_count == 0 );
@@ -489,30 +491,13 @@ always @ (posedge clk_sys) begin
     // fractional divider 20MHz from 72
     clk_20M <= 0;
     if ( clk20_count > 17 ) begin
-        if ( halt_addr == 0 || ~(halt_addr == m68k_a && !m68k_as_n ) ) begin
+//        if ( halt_addr == 0 || ~(halt_addr == m68k_a && !m68k_as_n ) ) begin
             clk_20M <= 1 ;
-        end
+//        end
         clk20_count <= clk20_count - 12;
     end else begin
         clk20_count <= clk20_count + 5;
     end
-    
-    clk_upd <= ( clk_upd_count == 0 );
-
-    // 72MHz / 113 == 637.168KHz.  should be 640.
-    // todo : use fractional divider 112.5  alternate between 112 & 113
-    if ( clk_upd_count == 112 ) begin    //  112
-        clk_upd_count <= 0;
-    end else if ( pause_cpu == 0 ) begin
-        clk_upd_count <= clk_upd_count + 1;
-    end    
-
-    // fake io interrupt timing
-    if ( io_clk_count == 719999 ) begin    //  100Hz
-        io_clk_count <= 0;
-    end else if ( pause_cpu == 0 ) begin
-        io_clk_count <= io_clk_count + 1;
-    end     
 end
 
 wire    reset;
@@ -655,7 +640,7 @@ wire  [9:0] fg_tile = { fg_x[7:3], fg_y[7:3] } /* synthesis keep */;
 
 reg   [7:0] fg_colour;
 
-reg   [6:0] sprite_colour;
+reg   [7:0] sprite_colour;
 reg  [14:0] sprite_tile_num;
 reg         sprite_flip_x;
 reg         sprite_flip_y;
@@ -735,7 +720,7 @@ always @ (posedge clk_sys) begin
             // init
             sprite_state <= 21; // 21 = clear buffer, 22 = don't
             sprite_num <= 0;
-            sprite_layer <= 0;
+            sprite_layer <= status[17:16];
             // setup clearing line buffer
             spr_buf_din <= 0 ;
             spr_x_pos <= 0;
@@ -890,7 +875,7 @@ reg [23:0] rgb_sp;
 reg [11:0] pen;
 reg pen_valid;
 
-wire [23:0] pal4 [0:15] = '{24'h000000,24'h986d5f,24'h925f49,24'h6d4934,24'h560000,24'h0000ff,24'hff00ff,24'h564100,24'h4f4f4f,24'hffff00,24'h00ffff,24'hff0000,24'h494949,24'h343434,24'h8a0000,24'h5f00ff};
+// wire [23:0] pal4 [0:15] = '{24'h000000,24'h986d5f,24'h925f49,24'h6d4934,24'h560000,24'h0000ff,24'hff00ff,24'h564100,24'h4f4f4f,24'hffff00,24'h00ffff,24'hff0000,24'h494949,24'h343434,24'h8a0000,24'h5f00ff};
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
@@ -909,7 +894,7 @@ always @ (posedge clk_sys) begin
                 fg <= line_buf_fg_out[11:0] ;
                 sp <= spr_buf_dout[11:0] ;
             end else if ( clk6_count == 3 ) begin
-                pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 mean tile opaque 
+                pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 means tile is opaque 
                 //pen <= sp[11:0] ;
             end else if ( clk6_count == 5 ) begin
                 if ( pen[3:0] == 0 ) begin
@@ -1446,14 +1431,14 @@ jt03 ym2203 (
 );
 
 reg  signed  [7:0] dac ;
-wire signed [15:0] dac_sample = ( dac <<< 8 ) ;
+//wire signed [15:0] dac_sample = ( dac <<< 8 ) ;
 
 always @ * begin
     // mix audio
-    AUDIO_L <= ( opn_sample + dac_sample ) >>> 1; 
-    AUDIO_R <= ( opn_sample + dac_sample ) >>> 1;
-//    AUDIO_L <= opn_sample ; 
-//    AUDIO_R <= opn_sample ;
+    //AUDIO_L <= ( opn_sample + dac_sample ) >>> 1; 
+    //AUDIO_R <= ( opn_sample + dac_sample ) >>> 1;
+    AUDIO_L <= ( opn_sample + opll_sample ) >>> 1; 
+    AUDIO_R <= { ~dac[7], dac[6:0], 8'h0 } ;
 end
 
 reg [16:0] gfx1_addr;
