@@ -65,7 +65,7 @@ entity sdram is
 
     -- The delay in clock cycles, between the start of a read command and the
     -- availability of the output data.
-    CAS_LATENCY : natural := 3; -- 2=below 133MHz, 3=above 133MHz
+    CAS_LATENCY : natural := 2; -- 2=below 133MHz, 3=above 133MHz
 
     -- The number of 16-bit words to be bursted during a read/write.
     BURST_LENGTH : natural := 2;

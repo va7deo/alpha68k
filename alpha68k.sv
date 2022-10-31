@@ -192,7 +192,7 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_MIX = 0;
-assign LED_USER =  | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count } ;
+assign LED_USER =  | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
 assign LED_DISK = 0;
 assign LED_POWER = 0;
 assign BUTTONS = 0;
@@ -338,8 +338,8 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1;    
-reg [15:0] p2;    
+reg [7:0] p1;    
+reg [7:0] p2;    
 reg [15:0] dsw1;
 reg [15:0] dsw2;
 reg [15:0] coin;
@@ -433,7 +433,7 @@ reg user_flip;
 wire pll_locked;
 
 wire clk_sys;
-reg  clk_3M,clk_4M,clk_6M,clk_20M,clk_upd;
+reg  clk_3M,clk_4M,clk_6M,clk_20M,clk_io;
 
 wire clk_72M;
 
@@ -456,7 +456,7 @@ reg  [7:0] clk4_count;
 reg  [5:0] clk3_count;
 reg [15:0] clk_upd_count;
 
-reg [16:0] io_clk_count;
+reg [16:0] clk_io_count;
 
 reg [15:0] frame_count;
 
@@ -498,6 +498,15 @@ always @ (posedge clk_sys) begin
     end else begin
         clk20_count <= clk20_count + 5;
     end
+    
+    clk_io <= ( clk_io_count == 0 ) ;
+
+    if ( clk_io_count == 599999 ) begin // 120 Hz
+        clk_io_count <= 0;
+    end else begin
+        clk_io_count <= clk_io_count + 1;
+    end    
+    
 end
 
 wire    reset;
@@ -618,6 +627,7 @@ reg   [2:0] pri_buf[0:255];
  
 reg  [31:0] pix_data;
 reg  [31:0] spr_pix_data;
+reg  [31:0] spr_pix_data_fifo;
 
 reg  [8:0] x;
 
@@ -662,6 +672,8 @@ wire  [3:0] spr_pen = { spr_pix_data[24 + { 3 { sprite_flip_x } } ^ spr_x_ofs[2:
 
 //reg [3:0] sprite_col_idx_flipped ;
 
+reg   [11:0] sp_count ;
+
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
         tile_state   <= 0;
@@ -674,6 +686,7 @@ always @ (posedge clk_sys) begin
         // tiles
         if ( tile_state == 0 && hc == 0 ) begin
             tile_state <= 1;
+            sp_count <= 0;
             x <= 0;
         end else if ( tile_state == 1) begin
             line_buf_fg_w <= 0;
@@ -715,10 +728,10 @@ always @ (posedge clk_sys) begin
             tile_state <= 0;  
         end
         
-        // sprites. -- need 3 sprite layers
+        // sprites. -- need 3 sprite layers - 1 layer is split
         if ( sprite_state == 0 && hc == 0 ) begin
             // init
-            sprite_state <= 21; // 21 = clear buffer, 22 = don't
+            sprite_state <= 21; // 21 = clear buffer, 22 = don't   ***********
             sprite_num <= 0;
             sprite_layer <= status[17:16];
             // setup clearing line buffer
@@ -754,6 +767,7 @@ always @ (posedge clk_sys) begin
             endcase
             sprite_state <= 1;
         end else if ( sprite_state == 1 )  begin
+            sp_count <= sp_count + 1;
             spr_buf_w <= 0 ;
 
             // setup x read
@@ -807,11 +821,9 @@ always @ (posedge clk_sys) begin
         end else if ( sprite_state == 10 )  begin    
             //long addr = (t << 7) + (((dx & 0x8) != 0) ? 0 : 64) + (dy * 4);
             // sprite_rom_addr <= { tile[10:0], ~dx[3], dy[3:0] } ;
-            case ( { sprite_flip_y, sprite_flip_x } )
-                2'b00: sprite_rom_addr <= { sprite_tile_num, ~spr_x_ofs[3],  sprite_col_idx[3:0] } ;
-                2'b01: sprite_rom_addr <= { sprite_tile_num,  spr_x_ofs[3],  sprite_col_idx[3:0] } ;
-                2'b10: sprite_rom_addr <= { sprite_tile_num, ~spr_x_ofs[3], ~sprite_col_idx[3:0] } ;
-                2'b11: sprite_rom_addr <= { sprite_tile_num,  spr_x_ofs[3], ~sprite_col_idx[3:0] } ;
+            case ( sprite_flip_y )
+                1'b0: sprite_rom_addr <= { sprite_tile_num, ~sprite_flip_x,  sprite_col_idx[3:0] } ; // ~(sprite_flip_x^spr_x_ofs[3])
+                1'b1: sprite_rom_addr <= { sprite_tile_num, ~sprite_flip_x, ~sprite_col_idx[3:0] } ;
             endcase 
             
             sprite_rom_cs <= 1;
@@ -821,43 +833,67 @@ always @ (posedge clk_sys) begin
             if ( sprite_rom_valid == 1 ) begin
                 sprite_rom_cs <= 0;
                 spr_pix_data <= sprite_rom_data;
+                spr_pix_data_fifo <= 0;             // debugging
                 sprite_state <= 12 ;
             end
-        end else if ( sprite_state == 12 ) begin                    
-            spr_buf_addr_w <= { vc[0], spr_x_pos };
+        end else if ( sprite_state == 12 ) begin
+            case ( sprite_flip_y )
+                1'b0: sprite_rom_addr <= { sprite_tile_num, sprite_flip_x,  sprite_col_idx[3:0] } ; // ~(sprite_flip_x^spr_x_ofs[3])
+                1'b1: sprite_rom_addr <= { sprite_tile_num, sprite_flip_x, ~sprite_col_idx[3:0] } ;
+            endcase 
+
+            sprite_rom_cs <= 1;
             
-            spr_buf_w <= | spr_pen  ; // don't write if 0 - transparent
-
-            spr_buf_din <= { sprite_colour, spr_pen };
-
-            if ( spr_x_ofs < 15 ) begin
-                spr_x_ofs <= spr_x_ofs + 1;
-                spr_x_pos <= spr_x_pos + 1;
+            sprite_state <= 13;
+        end else if ( sprite_state == 13 ) begin
+            // if the second read is ready queue the result and release sdram
+            if ( sprite_rom_cs == 1 && sprite_rom_valid == 1 ) begin
+                sprite_rom_cs <= 0;
+                spr_pix_data_fifo <= sprite_rom_data;
                 
-                // the second 8 pixel needs another rom read
-                if ( spr_x_ofs == 7 ) begin
-                    sprite_state <= 10;
+//                if ( spr_x_ofs >= 7 ) begin
+//                    spr_pix_data      <= sprite_rom_data ;
+//                    //sprite_state <= 10;
+//                end
+            end else if ( sprite_rom_cs == 0 || spr_x_ofs < 7 ) begin
+                //
+                spr_buf_addr_w <= { vc[0], spr_x_pos };
+                
+                spr_buf_w <= (| spr_pen ) ; // | ~( | sprite_layer )  ; // don't write if 0 - transparent
+
+                spr_buf_din <= { sprite_colour, spr_pen };
+
+                if ( spr_x_ofs < 15 ) begin
+                    spr_x_ofs <= spr_x_ofs + 1;
+                    spr_x_pos <= spr_x_pos + 1;
+                    
+                    // the second 8 pixel needs another rom read
+                    if ( spr_x_ofs == 7 ) begin
+                        spr_pix_data <= spr_pix_data_fifo ;
+                        //sprite_state <= 10;
+                    end
+                    
+                end else begin
+                    sprite_state <= 17;
                 end
-                
-            end else begin
-                sprite_state <= 17;
             end
        
         end else if ( sprite_state == 17) begin             
             spr_buf_w <= 0 ;
-            if ( hc > 360 ) begin
-                sprite_state <= 0;  
-                sprite_overrun <= 1;
-            end else if ( sprite_col < 30 || (sprite_col < 31 && sprite_layer < 3) ) begin
-                sprite_col <= sprite_col + 1;
-                sprite_state <= 1; 
-            end else begin
-                if ( sprite_layer < 3 ) begin
-                    sprite_layer <= sprite_layer + 1;
-                    sprite_state <= 22;  
+            if ( hc < 340 ) begin
+                if ( sprite_col < 30 || (sprite_col < 31 && sprite_layer < 3) ) begin
+                    sprite_col <= sprite_col + 1;
+                    sprite_state <= 1; 
                 end else begin
-                    sprite_state <= 0;  
+                    if ( sprite_layer < 3 ) begin
+                        sprite_layer <= sprite_layer + 1;
+                        sprite_state <= 22;  
+                    end else begin
+                        sprite_state <= 0;  
+                    end
                 end
+            end else begin
+                sprite_state <= 0;
             end
         end
 
@@ -875,8 +911,19 @@ reg [23:0] rgb_sp;
 reg [11:0] pen;
 reg pen_valid;
 
-// wire [23:0] pal4 [0:15] = '{24'h000000,24'h986d5f,24'h925f49,24'h6d4934,24'h560000,24'h0000ff,24'hff00ff,24'h564100,24'h4f4f4f,24'hffff00,24'h00ffff,24'hff0000,24'h494949,24'h343434,24'h8a0000,24'h5f00ff};
 
+// resistor dac 220, 470, 1k, 2.2k, 3.9k / has 8.2k pulldown for dimming (2nd block of 16)
+wire [7:0] dac_weight[0:63] = '{8'd0,8'd13,8'd22,8'd34,8'd46,8'd57,8'd65,8'd75,8'd91,8'd100,8'd107,8'd116,8'd126,8'd134,8'd140,8'd148,
+                                8'd168,8'd175,8'd180,8'd187,8'd194,8'd200,8'd205,8'd211,8'd220,8'd226,8'd230,8'd235,8'd241,8'd246,8'd250,8'd255,
+                                // dim
+                                8'd0, 8'd7,8'd17,8'd28,8'd41,8'd52,8'd60,8'd71,8'd87,8'd96,8'd103,8'd112,8'd122,8'd130,8'd136,8'd144,
+                                8'd165,8'd172,8'd177,8'd184,8'd191,8'd197,8'd202,8'd208,8'd218,8'd223,8'd227,8'd233,8'd239,8'd244,8'd248,8'd253};
+
+// bit 15 is dimming bit. 
+wire [5:0] r_pal = { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
+wire [5:0] g_pal = { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
+wire [5:0] b_pal = { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
+                                
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
         // randomize palette
@@ -904,7 +951,7 @@ always @ (posedge clk_sys) begin
                 end
             end else if ( clk6_count == 7 ) begin
                 if ( hc < 257 ) begin
-                    rgb <= {r_pal, 3'h0, g_pal, 3'h0, b_pal, 3'h0 };
+                    rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
                 end
             end
         end
@@ -915,6 +962,12 @@ end
 reg spr_flip_orientation ;
 reg [3:0] tile_bank;
 reg [1:0] vbl_sr;
+reg [1:0] hbl_sr;
+
+reg [7:0] credits;
+reg [3:0] coin_count;
+reg       coin_latch;
+reg       gw_dsw_write;
 
 /// 68k cpu
 always @ (posedge clk_sys) begin
@@ -941,6 +994,9 @@ always @ (posedge clk_sys) begin
         z80_nmi_n <= 1 ;
         z80_bank <= 0;
         z80_nmi_suppress <= 1; // ym2203 port high impedance on reset?
+        
+        credits <= 0;
+        gw_dsw_write <= 0;
     end else begin
     
         // vblank handling 
@@ -951,12 +1007,12 @@ always @ (posedge clk_sys) begin
             frame_count <= frame_count + 1;
         end 
 
-        if ( vbl_sr == 2'b10 ) begin // falling edge
-            //  mcu interrupt.  
-            // not sure about frequency
-            
-            m68k_ipl1_n <= ~( io_clk_count == 0 );
-        end         
+        // mcu interrupt handling 
+        hbl_sr <= { hbl_sr[0], clk_io };  // ????
+        if ( hbl_sr == 2'b01 ) begin // rising edge
+            //  68k vbl interrupt
+            m68k_ipl1_n <= 0;
+        end 
 
         if ( clk_20M == 1 ) begin
             // cpu acknowledged the interrupt
@@ -1019,21 +1075,72 @@ always @ (posedge clk_sys) begin
                         end
                         mcu_din <= dsw2 ;
                         mcu_wl <= 1;
-                    end else if ( m68k_a[8:1] == 8'h29 ) begin
-                        // gang wars dip2
-                        mcu_addr <= 13'h0163;
-                        mcu_din <= dsw2 ;
+                    end else if ( m68k_a[8:1] == 8'h22 ) begin
+                        mcu_addr <= 13'h0022;
+                        mcu_din <= credits ;
                         mcu_wh <= 1;
+                    end else if ( m68k_a[8:1] == 8'h29 ) begin
+                        // coins
+                        if ( { coin_b, coin_a } == 0 ) begin
+                            coin_latch <= 0;
+                            mcu_addr <= m68k_a[13:1];
+                            mcu_din <= 8'h00 ;
+                            mcu_wl <= 1;
+                        end else if ( coin_latch == 0 ) begin
+                            coin_latch <= 1;
+
+                            // set coin id
+                            if ( pcb == 0 ) begin
+                                mcu_din <= 8'h22 ;
+                            end else if ( pcb == 1 ) begin
+                                if ( coin_a == 1 ) begin
+                                    mcu_din <= 8'h24 ;
+                                end else begin
+                                    mcu_din <= 8'h23 ;
+                                end
+                            end
+                            mcu_addr <= m68k_a[13:1];
+                            mcu_wl <= 1;
+                        end
+                        
+                        // if gang wars trigger writing the dip value to ram
+                        if ( pcb == 1 ) begin
+                            gw_dsw_write <= 1;
+                        end
+                        
+                        if ( mcu_wl == 1 && gw_dsw_write == 1 ) begin
+                            mcu_addr <= 13'h0163;
+                            mcu_din <= dsw2 ;
+                            mcu_wh <= 1;
+                            gw_dsw_write <= 0;
+                        end
+
                     end else if ( m68k_a[8:1] == 8'hfe ) begin
                         // mcu id hign - gang wars 8512
-                        mcu_addr <= 13'h1ffe;
-                        mcu_din <= 8'h85 ;
-                        mcu_wl <= 1;
+                        if ( pcb == 0 ) begin
+                            mcu_addr <= 13'h00fe;
+                            mcu_din <= 8'h88 ;
+                            mcu_wl <= 1;
+                        end else if ( pcb == 1 ) begin
+                            mcu_addr <= 13'h1ffe;
+                            mcu_din <= 8'h85 ;
+                            mcu_wl <= 1;
+                        end else begin
+                            mcu_din <= 8'h00 ;
+                        end
                     end else if ( m68k_a[8:1] == 8'hff ) begin
                         // mcu id low
-                        mcu_addr <= 13'h1fff;
-                        mcu_din <= 8'h12 ;
-                        mcu_wl <= 1;
+                        if ( pcb == 0 ) begin
+                            mcu_addr <= 13'h00ff;
+                            mcu_din <= 8'h14 ;
+                            mcu_wl <= 1;
+                        end else if ( pcb == 1 ) begin
+                            mcu_addr <= 13'h1fff;
+                            mcu_din <= 8'h12 ;
+                            mcu_wl <= 1;
+                        end else begin
+                            mcu_din <= 8'h00 ;
+                        end
                     end
                 end
 
@@ -1311,7 +1418,7 @@ fx68k fx68k (
     .BGACKn(1'b1),
     
     .IPL0n(m68k_ipl0_n),
-    .IPL1n(m68k_ipl0_n),  // should be m68k_ipl1_n
+    .IPL1n(m68k_ipl1_n),  // should be m68k_ipl1_n
     .IPL2n(1'b1),
 
     // busses
@@ -1575,16 +1682,6 @@ reg  [11:0] tile_pal_addr;
 wire [15:0] tile_pal_dout;
 wire [15:0] tile_pal_din;
 
-//	int dark = pal_data >> 15;
-//	int r = ((pal_data >> 7) & 0x1e) | ((pal_data >> 14) & 0x1) ;
-//	int g = ((pal_data >> 3) & 0x1e) | ((pal_data >> 13) & 0x1) ;
-//	int b = ((pal_data << 1) & 0x1e) | ((pal_data >> 12) & 0x1) ;
-
-// todo: shift for dark bit
-wire [4:0] r_pal = { tile_pal_dout[11:8] , tile_pal_dout[14] };
-wire [4:0] g_pal = { tile_pal_dout[7:4]  , tile_pal_dout[13] };
-wire [4:0] b_pal = { tile_pal_dout[3:0]  , tile_pal_dout[12] };
-
     
 // tile palette high   
 dual_port_ram #(.LEN(4096)) tile_pal_h (
@@ -1814,21 +1911,55 @@ reg  [23:0] rom_2_count;
 reg  [23:0] sprite_count;
 reg  [23:0] sound_count;
 
-//always @ (posedge clk_sys) begin
-//    if ( reset == 1 ) begin
-//        global_count <= 0;
-//        rom_count <= 0;
-//        rom_2_count <= 0;
-//        sprite_count <= 0;
-//        sound_count <= 0;
-//    end else begin
-//        global_count <= global_count + 1;
-//        rom_count    <= ( prog_cache_rom_cs == 0 || prog_cache_valid   == 1 ) ? rom_count : rom_count + 1;
-//        rom_2_count  <= ( m68k_rom_2_cs == 0     || m68k_rom_2_valid   == 1 ) ? rom_2_count : rom_2_count + 1;;
-//        sprite_count <= ( sprite_cache_cs == 0   || sprite_cache_valid == 1 ) ? sprite_count : sprite_count + 1;;
-//        sound_count  <= ( z80_banked_cs == 0     || z80_banked_valid   == 1 ) ? sound_count : sound_count + 1;;
-//    end
-//end
+reg  rom_count_en;
+reg  rom_2_count_en;
+reg  sprite_count_en;
+reg  sound_count_en;
+
+always @ (posedge clk_sys) begin
+    if ( reset ) begin
+        global_count <= 0;
+        rom_count <= 0;
+        rom_2_count <= 0;
+        sprite_count <= 0;
+        sound_count <= 0;
+        
+        rom_count_en <= 0;
+        rom_2_count_en <= 0;
+        sprite_count_en <= 0;
+        sound_count_en <= 0;        
+    end else begin
+        if ( vbl == 1 ) begin
+            global_count <= 0;
+            rom_count <= 0;
+            rom_2_count <= 0;
+            sprite_count <= 0;
+            sound_count <= 0;
+        end else begin
+            global_count <= global_count + 1;
+
+            rom_count_en <= ( rom_count_en | prog_cache_rom_cs ) & ~prog_cache_valid;
+            if ( rom_count_en == 1 ) begin
+                rom_count <= rom_count + 1;
+            end
+
+            rom_2_count_en <= ( rom_2_count_en | m68k_rom_2_cs ) & ~m68k_rom_2_valid;
+            if ( rom_2_count_en == 1 ) begin
+                rom_2_count <= rom_2_count + 1;
+            end
+
+            sprite_count_en <= ( sprite_count_en | sprite_cache_cs ) & ~sprite_cache_valid;
+            if ( sprite_count_en == 1 ) begin
+                sprite_count <= sprite_count + 1;
+            end
+
+            sound_count_en <= ( sound_count_en | z80_banked_cs ) & ~z80_banked_valid;
+            if ( sound_count_en == 1 ) begin
+                sound_count <= sound_count + 1;
+            end        
+        end
+    end
+end
 
 rom_controller rom_controller 
 (
@@ -1857,17 +1988,17 @@ rom_controller rom_controller
     .prog_rom_2_data_valid(m68k_rom_2_valid),
 
     // sprite ROM interface
-//    .sprite_rom_cs(sprite_rom_cs),
-//    .sprite_rom_oe(1),
-//    .sprite_rom_addr(sprite_rom_addr),
-//    .sprite_rom_data(sprite_rom_data),
-//    .sprite_rom_data_valid(sprite_rom_valid),
-    
-    .sprite_rom_cs(sprite_cache_cs),
+    .sprite_rom_cs(sprite_rom_cs),
     .sprite_rom_oe(1),
-    .sprite_rom_addr(sprite_cache_addr),
-    .sprite_rom_data(sprite_cache_data),
-    .sprite_rom_data_valid(sprite_cache_valid),
+    .sprite_rom_addr(sprite_rom_addr),
+    .sprite_rom_data(sprite_rom_data),
+    .sprite_rom_data_valid(sprite_rom_valid),
+    
+//    .sprite_rom_cs(sprite_cache_cs),
+//    .sprite_rom_oe(1),
+//    .sprite_rom_addr(sprite_cache_addr),
+//    .sprite_rom_data(sprite_cache_data),
+//    .sprite_rom_data_valid(sprite_cache_valid),
     
     // sound ROM interface
 //    .sound_rom_cs(z80_banked_cs),
@@ -1918,24 +2049,24 @@ cache prog_cache
     .rom_data(prog_cache_data)
 ); 
 
-tile_cache tile_cache
-(
-    .clk(clk_sys),
-    .reset(reset),
-
-    // client
-    .cache_req(sprite_rom_cs),
-    .cache_addr(sprite_rom_addr),
-    .cache_data(sprite_rom_data),
-    .cache_valid(sprite_rom_valid),
-
-    // to rom controller
-    .rom_req(sprite_cache_cs),
-    .rom_addr(sprite_cache_addr),
-    .rom_data(sprite_cache_data),
-    .rom_valid(sprite_cache_valid)
-
-); 
+//tile_cache tile_cache
+//(
+//    .clk(clk_sys),
+//    .reset(reset),
+//
+//    // client
+//    .cache_req(sprite_rom_cs),
+//    .cache_addr(sprite_rom_addr),
+//    .cache_data(sprite_rom_data),
+//    .cache_valid(sprite_rom_valid),
+//
+//    // to rom controller
+//    .rom_req(sprite_cache_cs),
+//    .rom_addr(sprite_cache_addr),
+//    .rom_data(sprite_cache_data),
+//    .rom_valid(sprite_cache_valid)
+//
+//); 
 
 sound_cache sound_cache
 (
