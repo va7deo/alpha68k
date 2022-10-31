@@ -964,10 +964,22 @@ reg [3:0] tile_bank;
 reg [1:0] vbl_sr;
 reg [1:0] hbl_sr;
 
-reg [7:0] credits;
-reg [3:0] coin_count;
-reg       coin_latch;
-reg       gw_dsw_write;
+reg [7:0]   credits;
+reg [3:0]   coin_count;
+reg [1:0]   coin_latch;
+
+reg [12:0]  mcu_addr;
+reg  [7:0]  mcu_din;
+reg  [7:0]  mcu_dout;
+reg         mcu_wh;
+reg         mcu_wl;
+
+reg         mcu_busy;
+reg         mcu_2nd_write;
+reg [12:0]  mcu_2nd_addr;
+reg  [7:0]  mcu_2nd_din;
+reg         mcu_2nd_wh;
+reg         mcu_2nd_wl;
 
 /// 68k cpu
 always @ (posedge clk_sys) begin
@@ -996,7 +1008,11 @@ always @ (posedge clk_sys) begin
         z80_nmi_suppress <= 1; // ym2203 port high impedance on reset?
         
         credits <= 0;
-        gw_dsw_write <= 0;
+        coin_latch <= 0;
+        mcu_2nd_write <= 0;
+        mcu_2nd_wl <= 0;
+        mcu_2nd_wh <= 0;
+        mcu_busy <= 0;
     end else begin
     
         // vblank handling 
@@ -1016,6 +1032,7 @@ always @ (posedge clk_sys) begin
 
         if ( clk_20M == 1 ) begin
             // cpu acknowledged the interrupt
+            // TODO - this should be enable lines set by reading memory locations d8000 & e0000
             if ( ( m68k_as_n == 0 ) && ( m68k_fc == 3'b111 ) ) begin
                 m68k_ipl0_n <= 1;
                 m68k_ipl1_n <= 1;
@@ -1064,84 +1081,112 @@ always @ (posedge clk_sys) begin
 
                 // mcu addresses are word 
                 if ( m68k_sp85_cs == 1 ) begin
-                    if ( m68k_a[8:1] == 8'h00 ) begin
-                        
-                        if ( pcb == 0 ) begin
-                            // sky adv
-                            mcu_addr <= 13'h0000;
-                        end else begin
-                            // gang wars
-                            mcu_addr <= 13'h1f00;
-                        end
-                        mcu_din <= dsw2 ;
-                        mcu_wl <= 1;
-                    end else if ( m68k_a[8:1] == 8'h22 ) begin
-                        mcu_addr <= 13'h0022;
-                        mcu_din <= credits ;
-                        mcu_wh <= 1;
-                    end else if ( m68k_a[8:1] == 8'h29 ) begin
-                        // coins
-                        if ( { coin_b, coin_a } == 0 ) begin
-                            coin_latch <= 0;
-                            mcu_addr <= m68k_a[13:1];
-                            mcu_din <= 8'h00 ;
-                            mcu_wl <= 1;
-                        end else if ( coin_latch == 0 ) begin
-                            coin_latch <= 1;
-
-                            // set coin id
+                    if (  mcu_busy == 0 ) begin
+                        mcu_busy <= 1;
+                        if ( m68k_a[8:1] == 8'h00 ) begin
+                            
                             if ( pcb == 0 ) begin
-                                mcu_din <= 8'h22 ;
-                            end else if ( pcb == 1 ) begin
-                                if ( coin_a == 1 ) begin
-                                    mcu_din <= 8'h24 ;
-                                end else begin
-                                    mcu_din <= 8'h23 ;
-                                end
+                                // sky adv
+                                mcu_addr <= 13'h0000;
+                            end else begin
+                                // gang wars
+                                mcu_addr <= 13'h1f00;
                             end
-                            mcu_addr <= m68k_a[13:1];
-                            mcu_wl <= 1;
-                        end
-                        
-                        // if gang wars trigger writing the dip value to ram
-                        if ( pcb == 1 ) begin
-                            gw_dsw_write <= 1;
-                        end
-                        
-                        if ( mcu_wl == 1 && gw_dsw_write == 1 ) begin
-                            mcu_addr <= 13'h0163;
                             mcu_din <= dsw2 ;
-                            mcu_wh <= 1;
-                            gw_dsw_write <= 0;
-                        end
+                            mcu_wl <= 1;
+                        end else if ( m68k_a[8:1] == 8'h22 ) begin
+                            mcu_addr <= 13'h0022;
+                            mcu_din <= credits ;
+                            credits <= 0;
+                            mcu_wl <= 1;
+                        end else if ( m68k_a[8:1] == 8'h29 ) begin
+                            // coins
+                            if ( { coin_b, coin_a } == 0 ) begin
+                                coin_latch <= 0;
+                                
+                                mcu_addr <= m68k_a[13:1];
+                                mcu_din <= 8'h00 ;
+                                mcu_wl <= 1;
+                            end else if ( coin_latch == 0 ) begin
+                                coin_latch <= { coin_b, coin_a };
 
-                    end else if ( m68k_a[8:1] == 8'hfe ) begin
-                        // mcu id hign - gang wars 8512
-                        if ( pcb == 0 ) begin
-                            mcu_addr <= 13'h00fe;
-                            mcu_din <= 8'h88 ;
-                            mcu_wl <= 1;
-                        end else if ( pcb == 1 ) begin
-                            mcu_addr <= 13'h1ffe;
-                            mcu_din <= 8'h85 ;
-                            mcu_wl <= 1;
-                        end else begin
-                            mcu_din <= 8'h00 ;
-                        end
-                    end else if ( m68k_a[8:1] == 8'hff ) begin
-                        // mcu id low
-                        if ( pcb == 0 ) begin
-                            mcu_addr <= 13'h00ff;
-                            mcu_din <= 8'h14 ;
-                            mcu_wl <= 1;
-                        end else if ( pcb == 1 ) begin
-                            mcu_addr <= 13'h1fff;
-                            mcu_din <= 8'h12 ;
-                            mcu_wl <= 1;
-                        end else begin
-                            mcu_din <= 8'h00 ;
+                                // set coin id
+                                if ( pcb == 0 ) begin
+                                    mcu_din <= 8'h22 ;
+                                    
+                                    //coin_count <= coin_count + 1;
+                                    credits <= 1;
+                                    
+                                    // clear for sky adv
+                                    mcu_2nd_write <= 1;
+                                    mcu_2nd_addr  <= 13'h0022 ;
+                                    mcu_2nd_din   <= 0 ;
+                                    mcu_2nd_wl    <= 1;
+
+                                end else if ( pcb == 1 ) begin
+                                    // slot a/b values
+                                    if ( coin_a == 1 ) begin
+                                        mcu_din <= 8'h24 ;
+                                    end else begin
+                                        mcu_din <= 8'h23 ;
+                                    end
+                                end
+                                mcu_addr <= m68k_a[13:1];
+                                mcu_wl <= 1;
+                            end else begin
+                                mcu_addr <= m68k_a[13:1];
+                                mcu_din <= 8'h00 ;
+                                mcu_wl <= 1;
+                            end
+                            
+                            // if gang wars trigger writing the dip value to ram
+                            if ( pcb == 1 ) begin
+                                mcu_2nd_write <= 1;
+                                mcu_2nd_addr  <= 13'h0163 ;
+                                mcu_2nd_din   <= dsw2 ;
+                                mcu_2nd_wh    <= 1;
+                            end
+                        end else if ( m68k_a[8:1] == 8'hfe ) begin
+                            // mcu id hign - gang wars 8512
+                            if ( pcb == 0 ) begin
+                                mcu_addr <= 13'h00fe;
+                                mcu_din <= 8'h88 ;
+                                mcu_wl <= 1;
+                            end else if ( pcb == 1 ) begin
+                                mcu_addr <= 13'h1ffe;
+                                mcu_din <= 8'h85 ;
+                                mcu_wl <= 1;
+                            end else begin
+                                mcu_din <= 8'h00 ;
+                            end
+                        end else if ( m68k_a[8:1] == 8'hff ) begin
+                            // mcu id low
+                            if ( pcb == 0 ) begin
+                                mcu_addr <= 13'h00ff;
+                                mcu_din <= 8'h14 ;
+                                mcu_wl <= 1;
+                            end else if ( pcb == 1 ) begin
+                                mcu_addr <= 13'h1fff;
+                                mcu_din <= 8'h12 ;
+                                mcu_wl <= 1;
+                            end else begin
+                                mcu_din <= 8'h00 ;
+                            end
                         end
                     end
+                end else begin
+                    mcu_busy <= 0;
+                end
+                
+                if ( mcu_wl == 1 && mcu_2nd_write == 1 ) begin
+                    mcu_addr <= mcu_2nd_addr; 
+                    mcu_din <= mcu_2nd_din ;
+                    mcu_wl <= mcu_2nd_wl;
+                    mcu_wh <= mcu_2nd_wh;
+
+                    mcu_2nd_write <= 0;
+                    mcu_2nd_wl <= 0;
+                    mcu_2nd_wh <= 0;
                 end
 
                 if ( vbl_int_clr_cs == 1 ) begin
@@ -1564,12 +1609,6 @@ wire rom_download = ioctl_download && (ioctl_index==0);
 wire fg_ioctl_wr    = rom_download & ioctl_wr & (ioctl_addr >= 24'h100000) & (ioctl_addr < 24'h110000) ;
 wire z80_ioctl_wr   = rom_download & ioctl_wr & (ioctl_addr >= 24'h080000) & (ioctl_addr < 24'h088000) ;
 wire z80_ioctl_2_wr = rom_download & ioctl_wr & (ioctl_addr >= 24'h088000) & (ioctl_addr < 24'h090000) ;
-
-reg [12:0]  mcu_addr;
-reg  [7:0]  mcu_din;
-reg  [7:0]  mcu_dout;
-reg         mcu_wh;
-reg         mcu_wl;
 
 // main 68k ram high    
 dual_port_ram #(.LEN(8192)) ram8kx8_H (
