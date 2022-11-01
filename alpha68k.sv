@@ -1247,6 +1247,7 @@ always @ (posedge clk_sys) begin
                 end else if ( z80_rom_cs == 1 ) begin
                     z80_din <= z80_rom_data ;
                 end else if ( z80_latch_cs == 1 ) begin
+                    // z80_din <= ( pcb == 1 && m68k_latch == 8'h81 ) ? 8'h7e : m68k_latch ;
                     z80_din <= m68k_latch ;
                 end  
             end
@@ -1583,14 +1584,14 @@ jt03 ym2203 (
 );
 
 reg  signed  [7:0] dac ;
-//wire signed [15:0] dac_sample = ( dac <<< 8 ) ;
+wire signed [15:0] dac_sample = { ~dac[7], dac[6:0], 8'h0 } ;
 
 always @ * begin
     // mix audio
     //AUDIO_L <= ( opn_sample + dac_sample ) >>> 1; 
     //AUDIO_R <= ( opn_sample + dac_sample ) >>> 1;
-    AUDIO_L <= ( opn_sample + opll_sample ) >>> 1; 
-    AUDIO_R <= { ~dac[7], dac[6:0], 8'h0 } ;
+    AUDIO_L <= ( ( opn_sample + opll_sample + dac_sample  ) * 5 ) >>> 4;  // ( 3*5 ) / 16th
+    AUDIO_R <= ( ( opn_sample + opll_sample + dac_sample  ) * 5 ) >>> 4;  // ( 3*5 ) / 16th
 end
 
 reg [16:0] gfx1_addr;
