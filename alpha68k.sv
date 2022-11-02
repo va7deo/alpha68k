@@ -811,9 +811,12 @@ always @ (posedge clk_sys) begin
             if ( pcb == 0 ) begin
                 sprite_flip_x   <= 1'b0;  // 0x8000
                 sprite_flip_y   <= sprite_ram_dout[15] ;   // 0x8000
-            end else begin
+            end else if ( pcb == 1 ) begin
                 sprite_flip_x   <= sprite_ram_dout[15] ;   // 0x8000
                 sprite_flip_y   <= 1'b0;  // 0x8000
+            end else if ( pcb == 2 ) begin                
+                sprite_flip_x   <= sprite_ram_dout[14] ;
+                sprite_flip_y   <= sprite_ram_dout[15] ;
             end
             spr_x_ofs <= 0;
             spr_x_pos <= { sprite_col_x[7:0], sprite_col_y[15] } ;
@@ -1156,6 +1159,10 @@ always @ (posedge clk_sys) begin
                                 mcu_addr <= 13'h1ffe;
                                 mcu_din <= 8'h85 ;
                                 mcu_wl <= 1;
+                            end else if ( pcb == 2 ) begin
+                                mcu_addr <= 13'h00fe;
+                                mcu_din <= 8'h85 ;
+                                mcu_wl <= 1;
                             end else begin
                                 mcu_din <= 8'h00 ;
                             end
@@ -1167,6 +1174,10 @@ always @ (posedge clk_sys) begin
                                 mcu_wl <= 1;
                             end else if ( pcb == 1 ) begin
                                 mcu_addr <= 13'h1fff;
+                                mcu_din <= 8'h12 ;
+                                mcu_wl <= 1;
+                            end else if ( pcb == 2 ) begin
+                                mcu_addr <= 13'h00ff;
                                 mcu_din <= 8'h12 ;
                                 mcu_wl <= 1;
                             end else begin
