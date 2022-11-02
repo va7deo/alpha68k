@@ -807,16 +807,18 @@ always @ (posedge clk_sys) begin
             sprite_state <= 9;
         end else if ( sprite_state == 9 ) begin
             // tile index ready
-            sprite_tile_num <= sprite_ram_dout[14:0] ;  // 0x7fff
             if ( pcb == 0 ) begin
-                sprite_flip_x   <= 1'b0;  // 0x8000
-                sprite_flip_y   <= sprite_ram_dout[15] ;   // 0x8000
+                sprite_flip_x   <= 1'b0;  
+                sprite_flip_y   <= sprite_ram_dout[15] ;
+                sprite_tile_num <= sprite_ram_dout[14:0] ; 
             end else if ( pcb == 1 ) begin
-                sprite_flip_x   <= sprite_ram_dout[15] ;   // 0x8000
+                sprite_flip_x   <= sprite_ram_dout[15] ;
                 sprite_flip_y   <= 1'b0;  // 0x8000
+                sprite_tile_num <= sprite_ram_dout[14:0] ;
             end else if ( pcb == 2 ) begin                
                 sprite_flip_x   <= sprite_ram_dout[14] ;
                 sprite_flip_y   <= sprite_ram_dout[15] ;
+                sprite_tile_num <= sprite_ram_dout[13:0] ;  
             end
             spr_x_ofs <= 0;
             spr_x_pos <= { sprite_col_x[7:0], sprite_col_y[15] } ;
@@ -1088,8 +1090,8 @@ always @ (posedge clk_sys) begin
                         mcu_busy <= 1;
                         if ( m68k_a[8:1] == 8'h00 ) begin
                             
-                            if ( pcb == 0 ) begin
-                                // sky adv
+                            if ( pcb == 0 || pcb == 2 ) begin
+                                // sky adv / baseball
                                 mcu_addr <= 13'h0000;
                             end else begin
                                 // gang wars
@@ -1126,7 +1128,7 @@ always @ (posedge clk_sys) begin
                                     mcu_2nd_din   <= 0 ;
                                     mcu_2nd_wl    <= 1;
 
-                                end else if ( pcb == 1 ) begin
+                                end else if ( pcb == 1 || pcb == 2 ) begin
                                     // slot a/b values
                                     if ( coin_a == 1 ) begin
                                         mcu_din <= 8'h24 ;
