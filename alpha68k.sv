@@ -354,8 +354,8 @@ always @ (posedge clk_sys ) begin
     
     coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
     
-    dsw1 <=  {8'h00,sw[0][5:0],~key_test,~key_service};
-    dsw2 <=  {8'h00,sw[1][1:0], sw[1][7:2] };  // sw[1][1:0] not used? debugging
+    dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
+    dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -969,9 +969,13 @@ reg [3:0] tile_bank;
 reg [1:0] vbl_sr;
 reg [1:0] hbl_sr;
 
-reg [7:0]   credits;
-reg [3:0]   coin_count;
-reg [1:0]   coin_latch;
+reg [7:0] credits;
+reg [3:0] coin_count;
+reg [1:0] coin_latch;
+
+
+reg [7:0] coin_ratio_a [0:7] = '{ 8'h01, 8'h05, 8'h03, 8'h13, 8'h02, 8'h06, 8'h04, 8'h22 };  // (#coins-1) / credits
+reg [7:0] coin_ratio_b [0:7] = '{ 8'h01, 8'h41, 8'h21, 8'h61, 8'h11, 8'h51, 8'h31, 8'h71 };
 
 reg [12:0]  mcu_addr;
 reg  [7:0]  mcu_din;
@@ -1119,8 +1123,21 @@ always @ (posedge clk_sys) begin
                                 if ( pcb == 0 ) begin
                                     mcu_din <= 8'h22 ;
                                     
-                                    //coin_count <= coin_count + 1;
-                                    credits <= 1;
+                                    if ( coin_a == 1 ) begin
+                                        if ( coin_ratio_a[ ~dsw2[3:1] ][7:4] == coin_count ) begin
+                                            credits <= coin_ratio_a[ ~dsw2[3:1] ][3:0];
+                                            coin_count <= 0;
+                                        end else begin
+                                            coin_count <= coin_count + 1;
+                                        end
+                                    end if ( coin_b == 1 ) begin 
+                                        if ( coin_ratio_b[ ~dsw2[3:1] ][7:4] == coin_count ) begin
+                                            credits <= coin_ratio_b[ ~dsw2[3:1] ][3:0];
+                                            coin_count <= 0;
+                                        end else begin
+                                            coin_count <= coin_count + 1;
+                                        end
+                                    end
                                     
                                     // clear for sky adv
                                     mcu_2nd_write <= 1;
