@@ -192,7 +192,7 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_MIX = 0;
-assign LED_USER =  | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
+assign LED_USER =  0 ;// | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
 assign LED_DISK = 0;
 assign LED_POWER = 0;
 assign BUTTONS = 0;
@@ -323,15 +323,10 @@ wire  [7:0] ioctl_dout;
 wire  [7:0] ioctl_din;
 
 reg   [3:0]   pcb;
-reg   [23:0]  halt_addr;
 
 always @(posedge clk_sys) begin
     if (ioctl_wr && (ioctl_index==1)) begin
         pcb <= ioctl_dout;
-    end
-
-    if (ioctl_wr && ( ioctl_index==2 )) begin
-        halt_addr <= { halt_addr, ioctl_dout };
     end
 end
 
@@ -343,9 +338,10 @@ reg [7:0] p2;
 reg [15:0] dsw1;
 reg [15:0] dsw2;
 reg [15:0] coin;
+reg flip_dip ;
 
-reg invert_input;
-wire [7:0] invert_mask = { 8 {invert_input} } ;
+//reg invert_input;
+//wire [7:0] invert_mask = { 8 {invert_input} } ;
 
 always @ (posedge clk_sys ) begin 
     p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
@@ -356,6 +352,13 @@ always @ (posedge clk_sys ) begin
     
     dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
     dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
+    
+    if ( pcb == 0 ) begin
+        flip_dip <= ~dsw2[4] ;
+    end else if ( pcb == 1 ) begin
+        flip_dip <= ~dsw1[4] ;
+    end
+
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -491,9 +494,7 @@ always @ (posedge clk_sys) begin
     // fractional divider 20MHz from 72
     clk_20M <= 0;
     if ( clk20_count > 17 ) begin
-//        if ( halt_addr == 0 || ~(halt_addr == m68k_a && !m68k_as_n ) ) begin
-            clk_20M <= 1 ;
-//        end
+        clk_20M <= 1 ;
         clk20_count <= clk20_count - 12;
     end else begin
         clk20_count <= clk20_count + 5;
@@ -530,9 +531,6 @@ wire hsync;
 wire vsync;
 
 reg hbl_delay, vbl_delay;
-
-//assign  hbl_delay = hbl ;
-//assign  vbl_delay = vbl ;
 
 always @ ( posedge clk_6M ) begin
     hbl_delay <= hbl ;
@@ -629,24 +627,17 @@ reg  [31:0] pix_data;
 reg  [31:0] spr_pix_data;
 reg  [31:0] spr_pix_data_fifo;
 
-reg  [8:0] x;
+reg   [8:0] x;
 
-//t = (x / 8) + (y / 8) * 32;
-//
-//int addr;
-//// { t[10:0], y[2:0], x[3:1] }
-//int dx = x & 0x7;
-//int dy = y & 0x7;
-//
-//addr = (t << 5) + ( dy << 1 ) + (( dx < 4) ? 16 : 0 ) ;
+//wire  [8:0] sp_x    = x ;
+//wire  [8:0] sp_y    = vc ^ { 8 { flip_dip } };
+//wire  [8:0] sp_y    = vc;
 
-wire  [8:0] fg_x    = x  /* synthesis keep */;
-wire  [8:0] fg_y    = vc /* synthesis keep */;
+wire  [8:0] sp_x    = x ;
+wire  [8:0] sp_y    = vc ^ { 8 { flip_dip } };
+//wire  [8:0] sp_y    = vc ;
 
-wire  [8:0] sp_x    = x  /* synthesis keep */;
-wire  [8:0] sp_y    = vc /* synthesis keep */;
-
-wire  [9:0] fg_tile = { fg_x[7:3], fg_y[7:3] } /* synthesis keep */;
+wire  [9:0] fg_tile = { sp_x[7:3], sp_y[7:3] };
 
 reg   [7:0] fg_colour;
 
@@ -697,7 +688,7 @@ always @ (posedge clk_sys) begin
             fg_ram_addr <= fg_ram_addr + 1;
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
-            fg_rom_addr <= { tile_bank, fg_ram_dout[7:0], ~fg_x[2], fg_x[1], fg_y[2:0] } ;
+            fg_rom_addr <= { tile_bank, fg_ram_dout[7:0], ~sp_x[2], sp_x[1], sp_y[2:0] } ;
             tile_state <= 4;
         end else if ( tile_state == 4) begin             
             // address is valid - need more more cycle to read 
@@ -710,12 +701,12 @@ always @ (posedge clk_sys) begin
         end else if ( tile_state == 6) begin 
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_fg_w <= 1;
-            case ( fg_x[0] )
+            case ( sp_x[0] )
                 0: line_buf_fg_din <= { fg_colour, pix_data[3:0] } ; 
                 1: line_buf_fg_din <= { fg_colour, pix_data[7:4] } ; 
             endcase
             if ( x < 256 ) begin
-                if ( fg_x[0] == 1'b1 ) begin
+                if ( sp_x[0] == 1'b1 ) begin
                     tile_state <= 1;
                 end
                 x <= x + 1;
@@ -786,7 +777,7 @@ always @ (posedge clk_sys) begin
                 sprite_state <= 17;
             end
             // y valid
-            sprite_col_y <= sprite_ram_dout;
+            sprite_col_y <= sprite_ram_dout ;// + ( sprite_layer == 0 ? 1 : 0 );
             sprite_state <= 5;
         end else if ( sprite_state == 5 )  begin
             // tile ofset from the top of the column
@@ -925,10 +916,14 @@ wire [7:0] dac_weight[0:63] = '{8'd0,8'd13,8'd22,8'd34,8'd46,8'd57,8'd65,8'd75,8
                                 8'd165,8'd172,8'd177,8'd184,8'd191,8'd197,8'd202,8'd208,8'd218,8'd223,8'd227,8'd233,8'd239,8'd244,8'd248,8'd253};
 
 // bit 15 is dimming bit. 
-wire [5:0] r_pal = { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
-wire [5:0] g_pal = { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
-wire [5:0] b_pal = { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
-                                
+//wire [5:0] r_pal = { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
+//wire [5:0] g_pal = { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
+//wire [5:0] b_pal = { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
+                  
+reg [5:0] r_pal ;
+reg [5:0] g_pal ;
+reg [5:0] b_pal ;
+
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
         // randomize palette
@@ -941,23 +936,25 @@ always @ (posedge clk_sys) begin
         tile_pal_wr <= 0;
         if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
-                line_buf_addr_r <= { ~vc[0], hc[8:0] };
+                line_buf_addr_r <= { ~vc[0], 1'b0, hc[7:0] ^ { 8 { flip_dip } } } ; //( flip_dip == 0 ) ? hc[7:0] : ~hc[7:0] };
             end else if ( clk6_count == 2 ) begin
                 fg <= line_buf_fg_out[11:0] ;
                 sp <= spr_buf_dout[11:0] ;
             end else if ( clk6_count == 3 ) begin
                 pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 means tile is opaque 
                 //pen <= sp[11:0] ;
-            end else if ( clk6_count == 5 ) begin
+            end else if ( clk6_count == 4 ) begin
                 if ( pen[3:0] == 0 ) begin
                     tile_pal_addr <= 12'hfff ; // background pen
                 end else begin
                     tile_pal_addr <= pen[11:0] ;
                 end
+            end else if ( clk6_count == 6 ) begin
+                r_pal <= { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
+                g_pal <= { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
+                b_pal <= { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
             end else if ( clk6_count == 7 ) begin
-                if ( hc < 257 ) begin
-                    rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
-                end
+                rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
             end
         end
     end
@@ -1000,7 +997,6 @@ always @ (posedge clk_sys) begin
         m68k_ipl1_n <= 1 ;
         
         z80_irq_n <= 1 ;
-        invert_input <= 0;
         m68k_latch <= 0;
         spr_flip_orientation <= 0;
         tile_bank <= 0;
@@ -1148,9 +1144,9 @@ always @ (posedge clk_sys) begin
                                 end else if ( pcb == 1 || pcb == 2 ) begin
                                     // slot a/b values
                                     if ( coin_a == 1 ) begin
-                                        mcu_din <= 8'h24 ;
-                                    end else begin
                                         mcu_din <= 8'h23 ;
+                                    end else begin
+                                        mcu_din <= 8'h24 ;
                                     end
                                 end
                                 mcu_addr <= m68k_a[13:1];
@@ -1247,10 +1243,6 @@ always @ (posedge clk_sys) begin
                     spr_flip_orientation <= m68k_dout[2] ;
                 end
  
-                if ( m_invert_ctrl_cs == 1 ) begin
-                    invert_input <= ( m68k_dout[7:0] == 8'h07 ) ;
-                end                     
-                
             end 
         end
         
@@ -1494,7 +1486,7 @@ fx68k fx68k (
     .BGACKn(1'b1),
     
     .IPL0n(m68k_ipl0_n),
-    .IPL1n(m68k_ipl1_n),  // should be m68k_ipl1_n
+    .IPL1n(m68k_ipl1_n),
     .IPL2n(1'b1),
 
     // busses
@@ -1579,8 +1571,8 @@ wire opn_sample_clk;
 // OPLL (3.578 MHZ)
 jt2413 ym2413 (
     .rst(reset),
-    .clk(clk_4M),
-    .cen(1'b1), 
+    .clk(clk_sys),
+    .cen(clk_4M), 
     .din( z80_dout ),
     .addr( z80_addr[0] ),
     .cs_n(~z80_ym2413_cs),
@@ -1594,7 +1586,7 @@ reg ym2203we ;
 reg [7:0] ym2203_din;
 reg ym2203addr;
 
-always @ (posedge clk_6M) begin
+always @ (posedge clk_sys) begin
     ym2203we <= ~z80_ym2203_cs ;
     ym2203_din <= z80_dout ;
     ym2203addr <= z80_addr[0] ;
@@ -1603,8 +1595,8 @@ end
 // OPN (3 MHZ)
 jt03 ym2203 (
     .rst(reset),
-    .clk(clk_3M), // clock in is signal 1H (6MHz/2)
-    .cen(1'b1),
+    .clk(clk_sys), // clock in is signal 1H (6MHz/2)
+    .cen(clk_3M),
     .din( ym2203_din ),
     .addr( ym2203addr ),
     .cs_n( ym2203we ),
@@ -1618,8 +1610,6 @@ wire signed [15:0] dac_sample = { ~dac[7], dac[6:0], 8'h0 } ;
 
 always @ * begin
     // mix audio
-    //AUDIO_L <= ( opn_sample + dac_sample ) >>> 1; 
-    //AUDIO_R <= ( opn_sample + dac_sample ) >>> 1;
     AUDIO_L <= ( ( opn_sample + opll_sample + dac_sample  ) * 5 ) >>> 4;  // ( 3*5 ) / 16th
     AUDIO_R <= ( ( opn_sample + opll_sample + dac_sample  ) * 5 ) >>> 4;  // ( 3*5 ) / 16th
 end
