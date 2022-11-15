@@ -353,11 +353,11 @@ always @ (posedge clk_sys ) begin
     dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
     dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
     
-    if ( pcb == 0 ) begin
+//    if ( pcb == 0 ) begin
         flip_dip <= ~dsw2[4] ;
-    end else if ( pcb == 1 ) begin
-        flip_dip <= ~dsw1[4] ;
-    end
+//    end else if ( pcb == 1 ) begin
+//        flip_dip <= ~dsw2[4] ;
+//    end
 
 end
 
@@ -502,7 +502,7 @@ always @ (posedge clk_sys) begin
     
     clk_io <= ( clk_io_count == 0 ) ;
 
-    if ( clk_io_count == 599999 ) begin // 120 Hz
+    if ( clk_io_count == 4_666_234 ) begin // 15.4 Hz
         clk_io_count <= 0;
     end else begin
         clk_io_count <= clk_io_count + 1;
