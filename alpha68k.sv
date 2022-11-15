@@ -777,7 +777,7 @@ always @ (posedge clk_sys) begin
                 sprite_state <= 17;
             end
             // y valid
-            sprite_col_y <= sprite_ram_dout ;// + ( sprite_layer == 0 ? 1 : 0 );
+            sprite_col_y <= sprite_ram_dout + ( sprite_layer == 0 ? ( flip_dip == 0 ? -1 : 1 ) : 0 );
             sprite_state <= 5;
         end else if ( sprite_state == 5 )  begin
             // tile ofset from the top of the column
