@@ -1,5 +1,5 @@
 
-# Alpha Denshi 68K (Sky Adventure) FPGA Implementation
+# Alpha Denshi M68000 FPGA Implementation
 
 FPGA compatible core of Alpha Denshi M68000 (ALPHA68K96V based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O). FPGA implementation has been verified against schematics for Sky Adventure. PCB measurements taken from Gang Wars (ALPHA-68K96V) and Sky Soldiers (ALPHA-96KII).
 
@@ -7,59 +7,52 @@ Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.co
 
 <br>
 <p align="center">
-<img width="" height="" src="FILLME">
+<img width="" height="" src="https://user-images.githubusercontent.com/32810066/202098070-6eafb6af-0b36-488f-accf-0828d9bc8dd1.png">
 </p>
 
 ## Supported Games
 
 | Title | PCB<br>Number | Status  | Released | ROM Set  |
 |-------|---------------|---------|----------|----------|
-| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))              | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
-| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball) | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (sbasebalj only) |
-| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                     | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
-
-| Title | PCB<br>Number | Status  | Released | ROM Set  |
-|-------|---------------|---------|----------|----------|
-| [**Battle Field (バトル フィールド)**](https://en.wikipedia.org/wiki/Time_Soldiers) <br> Time Soldiers | ALPHA-68K96II (SS) | W.I.P | No  | N/A |
-| [**Sky Soldiers*](https://en.wikipedia.org/wiki/Sky_Soldiers)                                       | ALPHA-68K96II (SS) | W.I.P | No | N/A |
-| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                                      | ALPHA-68K96II (SS) | W.I.P | No | N/A |
-
-| Title | PCB<br>Number | Status  | Released | ROM Set  |
-|-------|---------------|---------|----------|----------|
-| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)     | ALPHA-68K96I | W.I.P | No | N/A |
-| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space) | A8004-1      | W.I.P | No | N/A |
-
-| Title | PCB<br>Number | Status  | Released | ROM Set  |
-|-------|---------------|---------|----------|----------|
-| [**Super Stingray**](https://segaretro.org/Super_Stingray)               | N/A          | W.I.P | No | N/A |
-| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/) | N/A          | W.I.P | No | N/A |
-| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)         | ALPHA-68K96N | W.I.P | No | N/A |
+| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                               | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
+| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)                  | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (sbasebalj only) |
+| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                                      | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
+| [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers) <br> Time Soldiers                | ALPHA-68K96II (SS) | **W.I.P**   | No  | N/A |
+| [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
+| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
+| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)                                        | ALPHA-68K96I       | **W.I.P**   | No | N/A |
+| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space)                                    | A8004-1            | **W.I.P**   | No | N/A |
+| [**Super Stingray**](https://segaretro.org/Super_Stingray)                                          | N/A                | **W.I.P**   | No | N/A |
+| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/)                            | N/A                | **W.I.P**   | No | N/A |
+| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)                                    | ALPHA-68K96N       | **W.I.P**   | No | N/A |
 
 ## External Modules
 
 |Name| Purpose | Author |
 |----|---------|--------|
-| [**fx68k**](https://github.com/ijor/fx68k)     | [**Motorola 68000 CPU**](https://en.wikipedia.org/wiki/Motorola_68000)   | Jorge Cwik     |
-| [**t80**](https://opencores.org/projects/t80)  | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)        | Daniel Wallner |
-| [**jt2413**](https://github.com/jotego/jtopl)  | [**Yamaha OPL-L**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)  | Jose Tejada    |
-| [**jt03**](https://github.com/jotego/jt12)     | [**Yamaha OPN**](https://en.wikipedia.org/wiki/Yamaha_YM2203)    | Jose Tejada    |
-| [**yc_out**](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder)  | [**Y/C Video Module**](https://en.wikipedia.org/wiki/S-Video)          | Mike Simone    |
+| [**fx68k**](https://github.com/ijor/fx68k)                      | [**Motorola 68000 CPU**](https://en.wikipedia.org/wiki/Motorola_68000)   | Jorge Cwik     |
+| [**t80**](https://opencores.org/projects/t80)                   | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)             | Daniel Wallner |
+| [**jt2413**](https://github.com/jotego/jtopl)                   | [**Yamaha OPL-L**](https://en.wikipedia.org/wiki/Yamaha_YM2413)          | Jose Tejada    |
+| [**jt03**](https://github.com/jotego/jt12)                      | [**Yamaha OPN**](https://en.wikipedia.org/wiki/Yamaha_YM2203)            | Jose Tejada    |
+| [**yc_out**](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder)  | [**Y/C Video Module**](https://en.wikipedia.org/wiki/S-Video)            | Mike Simone    |
 
 # Known Issues / Tasks
 
-- 
+- Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) and submit to mamedev [Task]  
+- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  
 
 # PCB Check List
 
 <br>
 
-FPGA implementation has been verified against [**schematics**](FILLME) for Sky Adventure. PCB measurements taken from Gang Wars (ALPHA-68K96V).
+FPGA implementation has been verified against [**schematics**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) for Sky Adventure. The schematics are improperly labeled Prehistoric Isle (hand written), this was discovered during development of the [**Prehistoric Isle FPGA implementation**](https://github.com/va7deo/PrehistoricIsle). PCB measurements taken from Gang Wars (ALPHA-68K96V) and Sky Adventure (ALPHA-68K96II).
 
 ### Clock Information
 
 H-Sync      | V-Sync      | Source   | PCB<br>Number  |
 ------------|-------------|----------|----------------|
-15.625kHz   | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96V (GW) |
+15.625kHz   | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96V (GW)  |
+15.625kHz   | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96II (SS) |
 
 ### Crystal Oscillators
 
@@ -90,11 +83,18 @@ YM2413   | ALPHA-68K96V (GW) | [**Yamaha YM2413**](https://en.wikipedia.org/wiki
 
 Location | PCB<br>Number | Chip | Use |
 ---------|---------------|------|-----|
-SP85 / ALPHA-8511 / M68705 | ALPHA-68K96V (GW) / ALPHA-68K96II (SS) | [**SP85N**](FILLME)          | Coin / Dipswitch / Screen Inversion Handling    |
-SNKCLK                     | ALPHA-68K96V (GW)                      | [**SNK CLK**](FILLME)        | Counter           |
-INPUT 84                   | ALPHA-68K96II                          | [**ALPHA-INPUT 84**](FILLME) | Rotary Handling   |
-INPUT 87                   | ALPHA-68K96V (GW)                      | [**ALPHA-INPUT 87**](FILLME) | Input Handling    |
-ALPHA-8921                 | ALPHA-68K96V (GW)                      | [**ALPHA-8921**](FILLME)     | GFX Muxing        |
+ALPHA-8511 / SP85          | ALPHA-68K96V (GW)<br>ALPHA-68K96II (SS) | [**SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)          | Coin Handling<br>Dipswitch Handling<br>Screen Inversion Handling |
+SNKCLK                     | ALPHA-68K96V (GW)                       | [**SNK CLK**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)        | Counter                                                          |
+INPUT 84                   | ALPHA-68K96II                           | [**ALPHA-INPUT 84**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Rotary Handling                                                  |
+INPUT 87                   | ALPHA-68K96V (GW)                       | [**ALPHA-INPUT 87**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Input Handling                                                   |
+ALPHA-8921                 | ALPHA-68K96V (GW)                       | [**ALPHA-8921**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)     | GFX Muxing                                                       |
+
+### ALPHA-8511 / SP85 Handling
+
+The SP85N or ALPHA-8511 appears to be a rebadged [**Motorola M68705p5**](https://en.wikipedia.org/wiki/Motorola_68HC05) utilized on Alpha Denshi M68000 hardware. Early  Alpha Denshi M68000 utilized the M68705 prior to it becoming a custom component.<br><br>
+There is a known dump for the ALPHA-8511 (possibly a M68705 from a bootleg) used on Super Stingray and a dump of the M68705 used on the Kyros no Yakata bootleg.<br><br>
+The code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code. The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
+[**Readings have been pulled from the Gang Wars SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/Gang%20Wars/SP85N_Readings/SP85N_Gang_Wars_Readings.png) revealing that the MCU pushes 15 interrupts per second, mame's driver for Alpha68k has this coded as 100 or 120 interrupts per second.
 
 # Core Features
 
