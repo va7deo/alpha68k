@@ -649,7 +649,7 @@ reg   [1:0] sprite_group;
 reg   [4:0] sprite_col;
 reg  [15:0] sprite_col_x;
 reg  [15:0] sprite_col_y;
-reg  [15:0] sprite_col_adj;
+//reg   [1:0] sprite_col_adj;
 reg   [8:0] sprite_col_idx;
 reg   [8:0] spr_x_pos;
 reg   [3:0] spr_x_ofs;
@@ -739,16 +739,10 @@ always @ (posedge clk_sys) begin
             spr_x_pos <= spr_x_pos + 1;
         end else if ( sprite_state == 22 ) begin  
             // start 
-            sprite_col_adj <= 0;
             case ( sprite_layer )
                 0: begin
                         sprite_group <= 1;
                         sprite_col   <= 31;
-                        if ( flip_dip == 0 ) begin
-                            sprite_col_adj <= -1;
-                        end else begin
-                            sprite_col_adj <=  1;
-                        end
                    end
                 1: begin
                         sprite_group <= 2;
@@ -785,7 +779,16 @@ always @ (posedge clk_sys) begin
             end
             // y valid
             
-            sprite_col_y <= sprite_ram_dout + sprite_col_adj; 
+            sprite_col_y <= sprite_ram_dout ; // + sprite_col_adj
+            sprite_state <= 18;
+        end else if ( sprite_state == 18 )  begin   
+            if ( sprite_layer == 0 ) begin
+                if ( flip_dip == 0 ) begin
+                    sprite_col_y <= sprite_col_y - 1 ;
+                end else begin
+                    sprite_col_y <= sprite_col_y + 1 ;
+                end
+            end
             sprite_state <= 5;
         end else if ( sprite_state == 5 )  begin
             // tile ofset from the top of the column
