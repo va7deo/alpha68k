@@ -78,11 +78,13 @@ endfunction
 localparam SKYADV      = 0;
 localparam GANGWARS    = 1;
 localparam SBASEBAL    = 2;
+localparam SKYADVU     = 4;
+
 
 always @ (*) begin
     // Memory mapping based on PCB type
     case (pcb)
-        SKYADV, GANGWARS, SBASEBAL: begin
+        SKYADV, GANGWARS, SBASEBAL, SKYADVU: begin
             //	map(0x000000, 0x03ffff).rom();
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
             

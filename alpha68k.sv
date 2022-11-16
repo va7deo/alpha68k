@@ -353,11 +353,7 @@ always @ (posedge clk_sys ) begin
     dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
     dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
     
-//    if ( pcb == 0 ) begin
-        flip_dip <= ~dsw2[4] ;
-//    end else if ( pcb == 1 ) begin
-//        flip_dip <= ~dsw2[4] ;
-//    end
+    flip_dip <= ~dsw2[4] ;
 
 end
 
@@ -809,7 +805,7 @@ always @ (posedge clk_sys) begin
             sprite_state <= 9;
         end else if ( sprite_state == 9 ) begin
             // tile index ready
-            if ( pcb == 0 ) begin
+            if ( pcb == 0 || pcb == 4 ) begin
                 sprite_flip_x   <= 1'b0;  
                 sprite_flip_y   <= sprite_ram_dout[15] ;
                 sprite_tile_num <= sprite_ram_dout[14:0] ; 
@@ -1101,7 +1097,7 @@ always @ (posedge clk_sys) begin
                         mcu_busy <= 1;
                         if ( m68k_a[8:1] == 8'h00 ) begin
                             
-                            if ( pcb == 0 || pcb == 2 ) begin
+                            if ( pcb == 0 || pcb == 2 || pcb == 4 ) begin
                                 // sky adv / baseball
                                 mcu_addr <= 13'h0000;
                             end else begin
@@ -1127,8 +1123,16 @@ always @ (posedge clk_sys) begin
                                 coin_latch <= { coin_b, coin_a };
 
                                 // set coin id
-                                if ( pcb == 0 ) begin
-                                    mcu_din <= 8'h22 ;
+                                if ( pcb == 0 || pcb == 4 ) begin
+                                    if ( pcb == 0 ) begin
+                                        mcu_din <= 8'h22 ;
+                                    end else begin
+                                        if ( coin_a == 1 ) begin
+                                            mcu_din <= 8'h23 ;
+                                        end else begin
+                                            mcu_din <= 8'h24 ;
+                                        end
+                                    end
                                     
                                     if ( coin_a == 1 ) begin
                                         if ( coin_ratio_a[ ~dsw2[3:1] ][7:4] == coin_count ) begin
