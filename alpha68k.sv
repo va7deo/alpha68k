@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X   XXXXXX          XXX XXXXXXXX      XXXX                       
+// X   XXXXXX          XXX XXXXXXXX      XX                         
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -250,8 +250,9 @@ localparam CONF_STR = {
     "P3,Debug Settings;",
     "P3-;",
     "P3OGH,First Layer (Sprite),0,1,2,3;",
-    "P3o5,GangWars Enemy Laugh,On,Off;",
+    "P3-;",
     "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
     "-;",
