@@ -215,8 +215,7 @@ wire [3:0]  vs_offset = status[31:28];
 wire [3:0]  hs_width  = status[59:56];
 wire [3:0]  vs_width  = status[63:60];
 
-wire gfx_fg_en = ~(status[38] | key_fg_enable);
-wire gfx_sp_en = ~(status[40] | key_spr_enable);
+wire kill_laugh = status[37];
 
 assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd8 : 8'd7) : (aspect_ratio - 1'd1);
 assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd7 : 8'd8) : 12'd0;
@@ -251,10 +250,7 @@ localparam CONF_STR = {
     "-;",
     "P3,Debug Settings;",
     "P3-;",
-    "P3o5,Text Layer,On,Off;",
-    "P3o6,Foreground Layer,On,Off;",
-    "P3o7,Background Layer,On,Off;",
-    "P3o8,Sprite Layer,On,Off;",
+    "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
     "-;",
@@ -496,7 +492,7 @@ always @ (posedge clk_sys) begin
     if ( clk20_count > 17 ) begin
         clk_20M <= 1 ;
         clk20_count <= clk20_count - 12;
-    end else begin
+    end else if ( pause_cpu == 0 )  begin
         clk20_count <= clk20_count + 5;
     end
     
@@ -1281,7 +1277,8 @@ always @ (posedge clk_sys) begin
                     z80_din <= z80_rom_data ;
                 end else if ( z80_latch_cs == 1 ) begin
                     // z80_din <= ( pcb == 1 && m68k_latch == 8'h81 ) ? 8'h7e : m68k_latch ;
-                    z80_din <= m68k_latch ;
+                    // z80_din <= m68k_latch ;
+                    z80_din <= ( kill_laugh == 1 && m68k_latch == 8'h81 ) ? 8'h00 : m68k_latch ;
                 end  
             end
            
