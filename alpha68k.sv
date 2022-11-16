@@ -251,6 +251,7 @@ localparam CONF_STR = {
     "P3-;",
     "P3OGH,First Layer (Sprite),0,1,2,3;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
+    "P3o6,Swap P1/P2,Off,On;",
     "P3-;",
     "DIP;",
     "-;",
@@ -353,17 +354,50 @@ always @ (posedge clk_sys ) begin
 
 end
 
-wire        p1_right   = joy0[0] | key_p1_right;
-wire        p1_left    = joy0[1] | key_p1_left;
-wire        p1_down    = joy0[2] | key_p1_down;
-wire        p1_up      = joy0[3] | key_p1_up;
-wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+wire        p1_right;
+wire        p1_left;
+wire        p1_down;
+wire        p1_up;
+wire [2:0]  p1_buttons;
 
-wire        p2_right   = joy1[0] | key_p2_right;
-wire        p2_left    = joy1[1] | key_p2_left;
-wire        p2_down    = joy1[2] | key_p2_down;
-wire        p2_up      = joy1[3] | key_p2_up;
-wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+wire        p2_right;
+wire        p2_left;
+wire        p2_down;
+wire        p2_up;
+wire [2:0]  p2_buttons;
+
+reg         p1_swap ;
+
+always @ * begin
+
+    p1_swap <= status[38];
+    
+    if ( status[38] == 0 ) begin
+        p1_right   <= joy0[0] | key_p1_right;
+        p1_left    <= joy0[1] | key_p1_left;
+        p1_down    <= joy0[2] | key_p1_down;
+        p1_up      <= joy0[3] | key_p1_up;
+        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+        p2_right   <= joy1[0] | key_p2_right;
+        p2_left    <= joy1[1] | key_p2_left;
+        p2_down    <= joy1[2] | key_p2_down;
+        p2_up      <= joy1[3] | key_p2_up;
+        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    end else begin
+        p1_right   <= joy1[0] | key_p1_right;
+        p1_left    <= joy1[1] | key_p1_left;
+        p1_down    <= joy1[2] | key_p1_down;
+        p1_up      <= joy1[3] | key_p1_up;
+        p1_buttons <= joy1[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+        p2_right   <= joy0[0] | key_p2_right;
+        p2_left    <= joy0[1] | key_p2_left;
+        p2_down    <= joy0[2] | key_p2_down;
+        p2_up      <= joy0[3] | key_p2_up;
+        p2_buttons <= joy0[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    end
+end
 
 wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
 wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
