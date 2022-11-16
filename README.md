@@ -7,16 +7,16 @@ Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.co
 
 <br>
 <p align="center">
-<img width="" height="" src="https://user-images.githubusercontent.com/32810066/202098070-6eafb6af-0b36-488f-accf-0828d9bc8dd1.png">
+<img width="" height="" src="https://user-images.githubusercontent.com/32810066/202100352-646d11d1-f6ac-4bfe-bcc6-0849ffb25cfe.png">
 </p>
 
 ## Supported Games
 
 | Title | PCB<br>Number | Status  | Released | ROM Set  |
 |-------|---------------|---------|----------|----------|
-| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                               | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
-| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)                  | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (sbasebalj only) |
-| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                                      | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged           |
+| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                               | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged               |
+| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)                  | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (**sbasebalj** only) |
+| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                                      | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged              55 |
 | [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers) <br> Time Soldiers                | ALPHA-68K96II (SS) | **W.I.P**   | No  | N/A |
 | [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
 | [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
@@ -39,7 +39,8 @@ Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.co
 # Known Issues / Tasks
 
 - Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) and submit to mamedev [Task]  
-- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  
+- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  <br><br>
+- Super Champion Baseball (sbasebal) freezes due to MCU ROM code (no dump) [Issue]  
 
 # PCB Check List
 
@@ -91,7 +92,7 @@ ALPHA-8921                 | ALPHA-68K96V (GW)                       | [**ALPHA-
 
 ### ALPHA-8511 / SP85 Handling
 
-The SP85N or ALPHA-8511 appears to be a rebadged [**Motorola M68705p5**](https://en.wikipedia.org/wiki/Motorola_68HC05) utilized on Alpha Denshi M68000 hardware. Early  Alpha Denshi M68000 utilized the M68705 prior to it becoming a custom component.<br><br>
+The SP85N or ALPHA-8511 utilized on Alpha Denshi M68000 hardware for I/O handling appears to be closely related to the Motorola M68705p5 . Early Alpha Denshi M68000 utilized the M68705 prior to it becoming a custom component. It's possible this is a rebadged custom.<br><br>
 There is a known dump for the ALPHA-8511 (possibly a M68705 from a bootleg) used on Super Stingray and a dump of the M68705 used on the Kyros no Yakata bootleg.<br><br>
 The code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code. The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
 [**Readings have been pulled from the Gang Wars SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/Gang%20Wars/SP85N_Readings/SP85N_Gang_Wars_Readings.png) revealing that the MCU pushes 15 interrupts per second, mame's driver for Alpha68k has this coded as 100 or 120 interrupts per second.
@@ -122,7 +123,7 @@ LS-30 Rotary Encoder | RP2040 | Wired USB | 1ms | 2241 | 95.52% | 0.747 ms | 2e8
 
 - Additional toggle to enable the scandoubler without changing ini settings and new scanline option for 100% is available, this draws a black line every other frame. Below is an example.
 
-<table><tr><th>Scandoubler Fx</th><th>Scanlines 25%</th><th>Scanlines 50%</th><th>Scanlines 75%</th><th>Scanlines 100%</th><tr><td><br> <p align="center"><img width="128" height="112" src="FILL ME"></td><td><br> <p align="center"><img width="128" height="112" src="FILL ME"></td><td><br> <p align="center"><img width="128" height="112" src="FILL ME"></td><td><br> <p align="center"><img width="128" height="112" src="FILL ME"></td><td><br> <p align="center"><img width="128" height="112" src="FILL ME"></td></tr></table>
+<table><tr><th>Scandoubler Fx</th><th>Scanlines 25%</th><th>Scanlines 50%</th><th>Scanlines 75%</th><th>Scanlines 100%</th><tr><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202102926-b860c972-4622-44c5-9df4-f4ce418042ab.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103109-fa5229d7-5085-45c8-9833-494135c7fef3.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103205-b984b54a-1f82-41da-9616-6f1a923383b9.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103300-74daf79e-19bf-4c95-8ab7-b5bcfd51e426.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103345-1a85d766-8599-42b2-abe6-deab3df2aeaa.png"></td></tr></table>
 
 # Controls
 
@@ -132,7 +133,7 @@ LS-30 Rotary Encoder | RP2040 | Wired USB | 1ms | 2241 | 95.52% | 0.747 ms | 2e8
 
 <br>
 
-<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Gang Wars</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="128" height="112" src="FILL ME"></td><td><p align="center">Co-Op</td><tr><td><p align="center">Sky Adventure</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="128" height="112" src="FILL ME"></td><td><p align="center">Co-Op</td><tr><td><p align="center">Super Champion<br>Baseball</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="128" height="112" src="FILL ME"></td><td><p align="center">Co-Op</td> </table>
+<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Gang Wars</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202104150-876e36e4-ab13-45c1-8162-c83050c11842.png"></td><td><p align="center">Co-Op</td><tr><td><p align="center">Super Champion<br>Baseball</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202104322-b92306bf-954d-4f6b-8c69-86fb53e7a1c6.png"></td><td><p align="center">Co-Op</td><tr><td><p align="center">Sky Adventure</p></td><td><p align="center">8-Way</p></td><td><p align="center"><br><img width="112" height="128" src="https://user-images.githubusercontent.com/32810066/202104449-97caea3f-b085-4d20-b7af-4285dd8b8a04.png"></td><td><p align="center">Co-Op</td> </table>
 
 <br>
 
