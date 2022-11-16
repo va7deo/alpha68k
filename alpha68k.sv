@@ -251,7 +251,7 @@ localparam CONF_STR = {
     "P3-;",
     "P3OGH,First Layer (Sprite),0,1,2,3;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
-    "P3o6,Swap P1/P2,Off,On;",
+    "P3o6,Swap P1/P2 Joystick,Off,On;",
     "P3-;",
     "DIP;",
     "-;",
