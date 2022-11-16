@@ -98,8 +98,8 @@ ALPHA-8921                 | ALPHA-68K96V (GW)                       | [**ALPHA-
 
 The SP85N or ALPHA-8511 utilized on Alpha Denshi M68000 hardware for I/O handling appears to be closely related to the Motorola M68705p5 . Early Alpha Denshi M68000 utilized the M68705 prior to it becoming a custom component. It's possible this is a rebadged custom.<br><br>
 There is a known dump for the ALPHA-8511 (possibly a M68705 from a bootleg) used on Super Stingray and a dump of the M68705 used on the Kyros no Yakata bootleg.<br><br>
-The code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code. The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
-[**Readings have been pulled from the Gang Wars SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/Gang%20Wars/SP85N_Readings/SP85N_Gang_Wars_Readings.png) revealing that the MCU pushes 15 interrupts per second, mame's driver for Alpha68k has this coded as 100 or 120 interrupts per second.
+The program code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code according to mame documentation. The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame along with the ROMs. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
+[**Readings have been pulled from the Gang Wars SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/Gang%20Wars/SP85N_Readings/SP85N_Gang_Wars_Readings.png) revealed that the MCU pushes 15 interrupts per second, mame's driver for Alpha68k has this coded as 100 or 120 interrupts per second.
 
 # Core Features
 
