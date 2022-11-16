@@ -1,9 +1,13 @@
 
 # Alpha Denshi M68000 FPGA Implementation
 
-FPGA compatible core of Alpha Denshi M68000 (ALPHA68K96V based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O). FPGA implementation has been verified against schematics for Sky Adventure. PCB measurements taken from Gang Wars (ALPHA-68K96V) and Sky Soldiers (ALPHA-96KII).
+FPGA compatible core of Alpha Denshi M68000 (ALPHA68K96V based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O).
 
-Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.com/Darren__O) / [**atrac17**](https://github.com/atrac17). Gang Wars, Sky Soldiers, and The Next Space (authentic) PCBs purchased by [**atrac17**](https://github.com/atrac17).  The intent is for this core to be a 1:1 playable implementation of Alpha Denshi M68000 arcade hardware. Currently in **beta state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+FPGA implementation has been verified against schematics for Sky Adventure. PCB measurements taken from Gang Wars (ALPHA-68K96V) and Sky Soldiers (ALPHA-96KII).
+
+Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.com/Darren__O) / [**atrac17**](https://github.com/atrac17). Gang Wars, Sky Soldiers, and The Next Space (authentic) PCBs purchased by [**atrac17**](https://github.com/atrac17).
+
+The intent is for this core to be a 1:1 playable implementation of Alpha Denshi M68000 arcade hardware. Currently in **beta state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
 
 <br>
 <p align="center">
@@ -14,9 +18,9 @@ Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.co
 
 | Title | PCB<br>Number | Status  | Released | ROM Set  |
 |-------|---------------|---------|----------|----------|
-| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                               | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged               |
+| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                               | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged set           |
 | [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)                  | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (**sbasebalj** only) |
-| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                                      | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged              55 |
+| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                                      | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged set           |
 | [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers) <br> Time Soldiers                | ALPHA-68K96II (SS) | **W.I.P**   | No  | N/A |
 | [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
 | [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                                      | ALPHA-68K96II (SS) | **W.I.P**   | No | N/A |
@@ -38,8 +42,8 @@ Sky Adventure (bootleg) PCB purchased by [**Darren Olafson**](https://twitter.co
 
 # Known Issues / Tasks
 
-- Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) and submit to mamedev [Task]  
-- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  <br><br>
+- Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) [Task]  
+- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task] <br><br>
 - Super Champion Baseball (sbasebal) freezes due to MCU ROM code (no dump) [Issue]  
 
 # PCB Check List

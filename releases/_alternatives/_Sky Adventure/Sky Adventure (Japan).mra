@@ -20,7 +20,7 @@
         <dip name="Freeze" bits="13" ids="On,Off"/>
     </switches>
 
-    <buttons names="Shot,Bomb,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
+    <buttons names="Normal Weapon,Special Weapon,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
 
     <rom index="1">
         <part>00</part>
