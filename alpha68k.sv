@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X   XXXXXX          XXX XXXXXXXX      XXXX                       
+// X   XXXXXX          XXX XXXXXXXX      XX                         
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -234,7 +234,6 @@ localparam CONF_STR = {
     "P1-;",
     "P1O7,Video Mode,NTSC,PAL;",
     "P1OM,Video Signal,RGBS/YPbPr,Y/C;",
-    "P1OJ,Slowdown,Off,On;",
     "P1-;",
     "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
@@ -252,6 +251,9 @@ localparam CONF_STR = {
 //    "P3OGH,First Layer (Sprite),0,1,2,3;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
 //    "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3-;",
+    "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
     "-;",

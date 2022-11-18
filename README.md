@@ -96,9 +96,9 @@ ALPHA-8921                 | ALPHA-68K96V (GW)                       | [**ALPHA-
 
 ### ALPHA-8511 / SP85 Handling
 
-The SP85N or ALPHA-8511 utilized on Alpha Denshi M68000 hardware for I/O handling appears to be closely related to the Motorola M68705p5 . Early Alpha Denshi M68000 utilized the M68705 prior to it becoming a custom component. It's possible this is a rebadged custom.<br><br>
-There is a known dump for the ALPHA-8511 (possibly a M68705 from a bootleg) used on Super Stingray and a dump of the M68705 used on the Kyros no Yakata bootleg.<br><br>
-The program code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code according to mame documentation. The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame along with the ROMs. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
+The SP85N or ALPHA-8511 utilized on Alpha Denshi M68000 hardware for I/O handling appears to be closely related to the Motorola M68705p5. Early Alpha Denshi M68000 hardware utilized the M68705 before SNK / Alpha Denshi moved to a custom component. It's possible this is a rebadged custom.<br><br>
+There is a known dump for the ALPHA-8511 (possibly a M68705 from a bootleg) used on Super Stingray and a dump of the M68705 used on the Kyros no Yakata bootleg. The program code from the Kyros no Yakata bootleg may match the original ALPHA-8511 program code according to mame documentation.<br><br>
+The Sky Adventure bootleg purchased also uses a M68705p5 which is dumpable and will be submitted to mame along with the ROMs. Disassembly of the program code will be done for analysis based on current MCU implementation.<br><br>
 [**Readings have been pulled from the Gang Wars SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/Gang%20Wars/SP85N_Readings/SP85N_Gang_Wars_Readings.png) revealed that the MCU pushes 15 interrupts per second, mame's driver for Alpha68k has this coded as 100 or 120 interrupts per second.
 
 # Core Features
@@ -128,6 +128,12 @@ LS-30 Rotary Encoder | RP2040 | Wired USB | 1ms | 2241 | 95.52% | 0.747 ms | 2e8
 - Additional toggle to enable the scandoubler without changing ini settings and new scanline option for 100% is available, this draws a black line every other frame. Below is an example.
 
 <table><tr><th>Scandoubler Fx</th><th>Scanlines 25%</th><th>Scanlines 50%</th><th>Scanlines 75%</th><th>Scanlines 100%</th><tr><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202102926-b860c972-4622-44c5-9df4-f4ce418042ab.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103109-fa5229d7-5085-45c8-9833-494135c7fef3.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103205-b984b54a-1f82-41da-9616-6f1a923383b9.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103300-74daf79e-19bf-4c95-8ab7-b5bcfd51e426.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/202103345-1a85d766-8599-42b2-abe6-deab3df2aeaa.png"></td></tr></table>
+
+### Gang Wars Options
+
+- There is a toggle to swap inputs from Player 1 to Player 2 in Debug Settings. This will enable you to play as Jackie in Gang Wars instead of Mike while only having one controller connected. This only swaps inputs for the joystick, it does not effect keyboard inputs.
+
+- There is a toggle to disable the laughter from enemies in Gang Wars located in Debug Settings. Enabling this will mute the laughter when an enemy knocks Mike or Jackie down.
 
 # Controls
 
