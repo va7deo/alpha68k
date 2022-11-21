@@ -43,7 +43,9 @@ The intent is for this core to be a 1:1 playable implementation of Alpha Denshi 
 # Known Issues / Tasks
 
 - Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) [Task]  
-- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task] <br><br>
+- Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  
+- ~~Verify clocks on ALPHA-68K96II hardware~~ [Task]  <br><br>
+- Options removed currently until stability is checked, may be tied to RESET line [Task]  
 - Super Champion Baseball (sbasebal) freezes due to MCU ROM code (no dump) [Issue]  
 
 # PCB Check List
@@ -61,11 +63,16 @@ H-Sync      | V-Sync      | Source   | PCB<br>Number  |
 
 ### Crystal Oscillators
 
-Location               | PCB<br>Number     | Freq (MHz) | Use                                 |
------------------------|-------------------|------------|-------------------------------------|
-X-1  (24MHZ)           | ALPHA-68K96V (GW) | 24.000     | Z80 / YM2203 / Sprite / Pixel Clock |
-X-2  (20MHZ)           | ALPHA-68K96V (GW) | 20.000     | M68000                              |
-X-3  (3.579545MHz)     | ALPHA-68K96V (GW) | 3.579545   | YM2413 Clock                        |
+- MAME documentation for the Alpha96k.cpp states that ALPHA-68K96II hardware runs the M68000 at 8.00 MHZ. The actual frequency for the M68000 is 9.00 MHZ based on board readings from Sky Soldier.
+
+Location                | PCB<br>Number      | Freq (MHz) | Use                                                                              |
+------------------------|--------------------|------------|----------------------------------------------------------------------------------|
+X-1  (24 MHZ)           | ALPHA-68K96V (GW)  | 24.000     | Z80 CLK (6MHZ)<br>YM2203 (CLK 3 MHZ)<br>Sprite CLK (12 MHZ)<br>Pixel CLK (6 MHZ) |
+X-2  (20 MHZ)           | ALPHA-68K96V (GW)  | 20.000     | M68000 CLK (10 MHZ)                                                              |
+X-3  (3.579545 MHz)     | ALPHA-68K96V (GW)  | 3.579545   | YM2413 CLK (3.579545 MHz)                                                        |
+X-1  (3.579545 MHz)     | ALPHA-68K96II (SS) | 24.000     | YM2413 CLK (3.579545 MHz)                                                        |
+X-2  (18 MHZ)           | ALPHA-68K96II (SS) | 20.000     | M68000 CLK (9 MHZ)                                                               |
+X-3  (24 MHZ)           | ALPHA-68K96II (SS) | 3.579545   | Z80 CLK (6MHZ)<br>YM2203 (CLK 3 MHZ)<br>Sprite CLK (12 MHZ)<br>Pixel CLK (6 MHZ) |
 
 **Pixel clock:** 6.00 MHz
 
@@ -88,11 +95,11 @@ YM2413   | ALPHA-68K96V (GW) | [**Yamaha YM2413**](https://en.wikipedia.org/wiki
 
 Location | PCB<br>Number | Chip | Use |
 ---------|---------------|------|-----|
-ALPHA-8511 / SP85          | ALPHA-68K96V (GW)<br>ALPHA-68K96II (SS) | [**SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)          | Coin Handling<br>Dipswitch Handling<br>Screen Inversion Handling |
-SNKCLK                     | ALPHA-68K96V (GW)                       | [**SNK CLK**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)        | Counter                                                          |
-INPUT 84                   | ALPHA-68K96II                           | [**ALPHA-INPUT 84**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Rotary Handling                                                  |
-INPUT 87                   | ALPHA-68K96V (GW)                       | [**ALPHA-INPUT 87**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Input Handling                                                   |
-ALPHA-8921                 | ALPHA-68K96V (GW)                       | [**ALPHA-8921**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)     | GFX Muxing                                                       |
+SP85<br>ALPHA-8511<br>ALPHA-8411 | ALPHA-68K96V (GW)<br>ALPHA-68K96II (SS)<br> ALPHA-68K96V (SA) | [**SP85N**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)          | Coin Handling<br>Dipswitch Handling<br>Screen Inversion Handling |
+SNKCLK                           | ALPHA-68K96V (GW)                                             | [**SNK CLK**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)        | Counter                                                          |
+INPUT 84                         | ALPHA-68K96II                                                 | [**ALPHA-INPUT 84**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Rotary Handling                                                  |
+INPUT 87                         | ALPHA-68K96V (GW)                                             | [**ALPHA-INPUT 87**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf) | Input Handling                                                   |
+ALPHA-8921                       | ALPHA-68K96V (GW)                                             | [**ALPHA-8921**](https://github.com/va7deo/alpha68k/blob/main/doc/ALPHA-68K96V/ALPHA68K-96V_Schematics.pdf)     | GFX Muxing                                                       |
 
 ### ALPHA-8511 / SP85 Handling
 

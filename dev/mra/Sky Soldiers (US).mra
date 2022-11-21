@@ -22,7 +22,7 @@
         <dip name="Lives" bits="12,13" ids="6,5,4,3"/>
     </switches>
 
-    <buttons names="B1,B2,B3,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
+    <buttons names="Cannon System,Missle System,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
 
     <rom index="1">
         <part>05</part>
@@ -32,12 +32,16 @@
 
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
-            <part name="ss.3" crc="7b88aa2e" map="01"/>
-            <part name="ss.4" crc="f0283d43" map="10"/>
+            <part name="ss.3" crc="7b88aa2e" map="01" length="0x10000"/>
+            <part name="ss.4" crc="f0283d43" map="10" length="0x10000"/>
+            <part name="ss.1" crc="20e9dbc7" map="01" length="0x10000"/>
+            <part name="ss.2" crc="486f3432" map="10" length="0x10000"/>
         </interleave>
         <interleave output="16">
-            <part name="ss.1" crc="20e9dbc7" map="01"/>
-            <part name="ss.2" crc="486f3432" map="10"/>
+            <part name="ss.3" crc="7b88aa2e" map="01" offset="0x10000" length="0x10000"/>
+            <part name="ss.4" crc="f0283d43" map="10" offset="0x10000" length="0x10000"/>
+            <part name="ss.1" crc="20e9dbc7" map="01" offset="0x10000" length="0x10000"/>
+            <part name="ss.2" crc="486f3432" map="10" offset="0x10000" length="0x10000"/>
         </interleave>
 
         <!-- audiocpu - starts at 0x80000 -->
