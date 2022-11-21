@@ -21,7 +21,7 @@
         <dip name="Demo Sounds" bits="13" ids="On,Off"/>
     </switches>
 
-    <buttons names="Run/Spin/Power,Run/Spin/Hit Power,Jump/Jab/Throw Angle,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
+    <buttons names="Run/Spin/Power,Run/Spin/Hit Power,Jump/Jab/Throw Angle,P1 Start,P2 Start,P3 Start,P4 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start,Select,R1,L1"/>
 
     <rom index="1">
         <part>05</part>
