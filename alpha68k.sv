@@ -1211,6 +1211,8 @@ always @ (posedge clk_sys) begin
                              m68k_spr_cs  ? m68k_sprite_dout : // 0xff000000
                              m68k_fg_ram_cs ? m68k_fg_ram_dout :
                              m68k_pal_cs ? m68k_pal_dout :
+                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
+                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
                              input_p1_cs ? { p2, p1 } :
                              input_dsw1_cs ? dsw1 :
                              m68k_sp85_cs ? 0 : 
@@ -1474,6 +1476,8 @@ wire    m68k_fg_ram_cs;
 wire    m68k_spr_flip_cs;
 wire    input_p1_cs;
 wire    input_p2_cs;
+wire    m68k_rotary1_cs;
+wire    m68k_rotary2_cs;
 wire    input_coin_cs;
 wire    input_dsw1_cs;
 wire    input_dsw2_cs;
@@ -1523,6 +1527,9 @@ chip_select cs (
     .m68k_sp85_cs,
     .m68k_fg_ram_cs,
     .m68k_pal_cs,
+
+    .m68k_rotary1_cs,
+    .m68k_rotary2_cs,
 
     .input_p2_cs,
     .input_coin_cs,

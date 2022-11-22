@@ -31,11 +31,14 @@ module chip_select
     output reg input_dsw1_cs,
     output reg input_dsw2_cs,
     output reg input_coin_cs,
-    
+
+    output reg m68k_rotary1_cs,
+    output reg m68k_rotary2_cs,
+
     output reg vbl_int_clr_cs,
     output reg cpu_int_clr_cs,
     output reg watchdog_clr_cs,
-    
+
     output reg m68k_latch_cs,
 
     // Z80 selects
@@ -81,6 +84,8 @@ localparam SBASEBALJ   = 2;
 localparam SBASEBAL    = 3;
 localparam SKYADVU     = 4;
 localparam SKYSOLDR    = 5;
+localparam TIMESOLD    = 6;
+localparam GOLDMEDL    = 7;
 
 
 always @ (*) begin
@@ -227,7 +232,7 @@ always @ (*) begin
             z80_bank_set_cs   <= ( z80_addr[3:1] == 3'b111 ) && ( !IORQ_n ) && (!WR_n); // select latches z80 D[4:0]
         end
 
-        SKYSOLDR: begin
+        SKYSOLDR, TIMESOLD, GOLDMEDL: begin
             //	map(0x000000, 0x03ffff).rom();
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
 
@@ -242,6 +247,11 @@ always @ (*) begin
 
             //	map(0x0c0000, 0x0c0001).r(FUNC(alpha68k_II_state::control_2_r)); /* CN1 & Dip 1 */
             input_p2_cs      <= m68k_cs( 24'h080000, 24'h080001 ) ;
+
+            //	map(0x0d0000, 0x0d0001).r(FUNC(alpha68k_II_state::control_4_r)); /* Top of CN1 & CN2 */
+            m68k_rotary1_cs      <= m68k_cs( 24'h0d0000, 24'h0d0001 );
+            //	map(0x0c8000, 0x0c8001).r(FUNC(alpha68k_II_state::control_3_r)); /* Bottom of CN2 */
+            m68k_rotary2_cs      <= m68k_cs( 24'h0c8000, 24'h0c8001 );
 
             // ???
             input_coin_cs    <= m68k_cs( 24'h080004, 24'h080005 ) ;
@@ -327,8 +337,7 @@ end
 //	map(0x300000, 0x3001ff).w(FUNC(alpha68k_III_state::alpha_microcontroller_w));
 //	map(0x303e00, 0x303fff).w(FUNC(alpha68k_III_state::alpha_microcontroller_w)); /* Gang Wars mirror */
 
-// SKYSOLDR
-
+// SKYSOLDR, TIMESOLD, GOLDMEDL
 //	map(0x008ffe, 0x008fff).nopw();
 //	map(0x0c8000, 0x0c8001).r(FUNC(alpha68k_II_state::control_3_r)); /* Bottom of CN2 */
 //	map(0x0d0000, 0x0d0001).r(FUNC(alpha68k_II_state::control_4_r)); /* Top of CN1 & CN2 */
