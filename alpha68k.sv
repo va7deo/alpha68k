@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X   XXXXXX          XXX XXXXXXXX      XX                         
+// X   XXXXXX        XXXXX XXXXXXXX      XX                         
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -248,11 +248,9 @@ localparam CONF_STR = {
     "-;",
     "P3,Debug Settings;",
     "P3-;",
-//    "P3OGH,First Layer (Sprite),0,1,2,3;",
-    "P3o5,GangWars Enemy Laugh,On,Off;",
-//    "P3o6,Swap P1/P2 Joystick,Off,On;",
-    "P3-;",
     "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3OI,P1 Rotary Type,Gamepad,LS-30;",
+    "P3OJ,P2 Rotary Type,Gamepad,LS-30;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
@@ -270,7 +268,7 @@ wire forced_scandoubler = hps_forced_scandoubler | status[10];
 wire  [1:0] buttons;
 wire [63:0] status;
 wire [10:0] ps2_key;
-wire [15:0] joy0, joy1;
+wire [15:0] joy0, joy1, joy2, joy3;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
@@ -296,7 +294,9 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
     .ioctl_wait(ioctl_wait),
 
     .joystick_0(joy0),
-    .joystick_1(joy1)
+    .joystick_1(joy1),
+    .joystick_2(joy2),
+    .joystick_3(joy3)
 );
 
 // INPUT
@@ -332,8 +332,10 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [7:0] p1;    
-reg [7:0] p2;    
+reg [7:0] p1;
+reg [7:0] p2;
+reg [3:0] p3;
+reg [3:0] p4;
 reg [15:0] dsw1;
 reg [15:0] dsw2;
 reg [15:0] coin;
@@ -368,7 +370,11 @@ wire        p2_down;
 wire        p2_up;
 wire [2:0]  p2_buttons;
 
-reg         p1_swap ;
+wire [2:0]  p3_buttons;
+
+wire [2:0]  p4_buttons;
+
+reg         p1_swap;
 
 always @ * begin
     p1_right   <= joy0[0] | key_p1_right;
@@ -382,10 +388,16 @@ always @ * begin
     p2_down    <= joy1[2] | key_p2_down;
     p2_up      <= joy1[3] | key_p2_up;
     p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+
+    p3_buttons <= joy2[6:4];
+
+    p4_buttons <= joy3[6:4];
 end
 
 wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
 wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+wire        start3  = joy2[7]  | key_start_3p;
+wire        start4  = joy3[8]  | key_start_4p;
 wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
 wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
 wire        b_pause = joy0[11] | key_pause;
@@ -393,14 +405,17 @@ wire        service = joy0[12] | key_test;
 
 // Keyboard handler
 
-wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
+wire key_start_1p, key_start_2p, key_start_3p, key_start_4p, key_coin_a, key_coin_b;
 wire key_tilt, key_test, key_reset, key_service, key_pause;
-wire key_fg_enable, key_spr_enable;
+//wire key_fg_enable, key_spr_enable;
 
 wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
 wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
 
 wire pressed = ps2_key[9];
+
+reg [11:0] key_ls30_p1;
+reg [11:0] key_ls30_p2;
 
 always @(posedge clk_sys) begin 
     reg old_state;
@@ -436,9 +451,104 @@ always @(posedge clk_sys) begin
             'h015: key_p2_c       <= pressed; // q
             'h01d: key_p2_d       <= pressed; // w
 
-            'h001: key_fg_enable  <= key_fg_enable  ^ pressed; // f9
-            'h009: key_spr_enable <= key_spr_enable ^ pressed; // f10
+            'h026: key_start_3p   <= pressed; // 3
+            'h025: key_start_4p   <= pressed; // 4
+
+            // Rotary1 LS-30 P1 Scancodes
+            'h035: key_ls30_p1[0]  <= pressed; // y
+            'h03c: key_ls30_p1[1]  <= pressed; // u
+            'h043: key_ls30_p1[2]  <= pressed; // i
+            'h044: key_ls30_p1[3]  <= pressed; // o
+            'h033: key_ls30_p1[4]  <= pressed; // h
+            'h03b: key_ls30_p1[5]  <= pressed; // j
+            'h042: key_ls30_p1[6]  <= pressed; // k
+            'h04b: key_ls30_p1[7]  <= pressed; // l
+            'h031: key_ls30_p1[8]  <= pressed; // n
+            'h03a: key_ls30_p1[9]  <= pressed; // m
+            'h041: key_ls30_p1[10] <= pressed; // ,
+            'h049: key_ls30_p1[11] <= pressed; // .
+
+            // Rotary1 LS-30 P2 Scancodes
+            'h01z: key_ls30_p2[0]  <= pressed; // z
+            'h022: key_ls30_p2[1]  <= pressed; // x
+            'h021: key_ls30_p2[2]  <= pressed; // c
+            'h02a: key_ls30_p2[3]  <= pressed; // v
+            'h032: key_ls30_p2[4]  <= pressed; // b
+            'h058: key_ls30_p2[5]  <= pressed; // caps lock
+            'h024: key_ls30_p2[6]  <= pressed; // e
+            'h02c: key_ls30_p2[7]  <= pressed; // t
+            'h026: key_ls30_p2[8]  <= pressed; // 3
+            'h025: key_ls30_p2[9]  <= pressed; // 4
+            'h03d: key_ls30_p2[10] <= pressed; // 7
+            'h03e: key_ls30_p2[11] <= pressed; // 8
+
+            //'h001: key_fg_enable  <= key_fg_enable  ^ pressed; // f9
+            //'h009: key_spr_enable <= key_spr_enable ^ pressed; // f10
         endcase
+    end
+end
+
+// Rotary controls
+
+reg [11:0] rotary1 ;  // this needs to be set using status or keyboard
+reg [11:0] rotary2 ;  // the active bit is low
+
+reg last_rot1_cw ;
+reg last_rot1_ccw ;
+reg last_rot2_cw ;
+reg last_rot2_ccw ;
+
+wire p1_rotary_controller_type = status[18];
+wire p2_rotary_controller_type = status[19];
+
+wire rot1_cw  = joy0[12] | key_ls30_p1[0];
+wire rot1_ccw = joy0[13] | key_ls30_p1[1];
+wire rot2_cw  = joy1[12] | key_ls30_p2[0];
+wire rot2_ccw = joy1[13] | key_ls30_p2[1];
+
+always @ (posedge clk_sys) begin
+    if ( reset == 1 ) begin
+        rotary1 <= 12'h1 ;
+        rotary2 <= 12'h1 ;
+    end else begin
+        if ( p1_rotary_controller_type == 0 ) begin
+            // did the button state change?
+            if ( rot1_cw != last_rot1_cw ) begin 
+                last_rot1_cw <= rot1_cw;
+                // rotate right
+                if ( rot1_cw == 1 ) begin
+                    rotary1 <= { rotary1[0], rotary1[11:1] };
+                end
+            end
+
+            if ( rot1_ccw != last_rot1_ccw ) begin
+                last_rot1_ccw <= rot1_ccw;
+                // rotate left
+                if ( rot1_ccw == 1 ) begin
+                    rotary1 <= { rotary1[10:0], rotary1[11] };
+                end
+            end
+        end else begin
+            rotary1 <= key_ls30_p1;
+        end
+
+        if ( p2_rotary_controller_type == 0 ) begin
+            if ( rot2_cw != last_rot2_cw ) begin
+                last_rot2_cw <= rot2_cw;
+                if ( rot2_cw == 1 ) begin
+                    rotary2 <= { rotary2[0], rotary2[11:1] };
+                end
+            end
+
+            if ( rot2_ccw != last_rot2_ccw ) begin
+                last_rot2_ccw <= rot2_ccw;
+                if ( rot2_ccw == 1 ) begin
+                    rotary2 <= { rotary2[10:0], rotary2[11] };
+                end
+            end
+        end else begin
+            rotary2 <= key_ls30_p2;
+        end
     end
 end
 
@@ -1101,6 +1211,8 @@ always @ (posedge clk_sys) begin
                              m68k_spr_cs  ? m68k_sprite_dout : // 0xff000000
                              m68k_fg_ram_cs ? m68k_fg_ram_dout :
                              m68k_pal_cs ? m68k_pal_dout :
+                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
+                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
                              input_p1_cs ? { p2, p1 } :
                              input_dsw1_cs ? dsw1 :
                              m68k_sp85_cs ? 0 : 
@@ -1364,6 +1476,8 @@ wire    m68k_fg_ram_cs;
 wire    m68k_spr_flip_cs;
 wire    input_p1_cs;
 wire    input_p2_cs;
+wire    m68k_rotary1_cs;
+wire    m68k_rotary2_cs;
 wire    input_coin_cs;
 wire    input_dsw1_cs;
 wire    input_dsw2_cs;
@@ -1413,6 +1527,9 @@ chip_select cs (
     .m68k_sp85_cs,
     .m68k_fg_ram_cs,
     .m68k_pal_cs,
+
+    .m68k_rotary1_cs,
+    .m68k_rotary2_cs,
 
     .input_p2_cs,
     .input_coin_cs,
