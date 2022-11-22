@@ -810,33 +810,51 @@ always @ (posedge clk_sys) begin
             fg_ram_addr <= fg_ram_addr + 1;
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
-            fg_rom_addr <= { tile_bank, fg_ram_dout[7:0], ~sp_x[2], sp_x[1], sp_y[2:0] } ;
+            if ( pcb < 5 ) begin
+                fg_rom_addr <= { tile_bank[2:0], fg_ram_dout[7:0], ~sp_x[2], sp_x[1]  , sp_y[2:0] } ;
+            end else begin
+                fg_rom_addr <= { tile_bank[6:4], fg_ram_dout[7:0], ~sp_x[2], sp_y[2:0], 1'b0 } ;
+            end
             tile_state <= 4;
         end else if ( tile_state == 4) begin             
             // address is valid - need more more cycle to read 
+            fg_rom_addr <= fg_rom_addr + 1;
             // the colour in the second tile attribute byte
             fg_colour <= fg_ram_dout[4:0] ; // [4] == opaque
             tile_state <= 5;
-        end else if ( tile_state == 5) begin              
-            pix_data <= fg_rom_data;
+        end else if ( tile_state == 5) begin 
+            // version II boards need 16 bits.  
+            pix_data[7:0] <= fg_rom_data;
             tile_state <= 6 ;
         end else if ( tile_state == 6) begin 
+            pix_data[15:8] <= fg_rom_data;
+            tile_state <= 7 ;
+        end else if ( tile_state == 7) begin 
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_fg_w <= 1;
-            case ( sp_x[0] )
-                0: line_buf_fg_din <= { fg_colour, pix_data[3:0] } ; 
-                1: line_buf_fg_din <= { fg_colour, pix_data[7:4] } ; 
-            endcase
+            if ( pcb < 5 ) begin
+                case ( sp_x[0] )
+                    0: line_buf_fg_din <= { fg_colour, pix_data[3:0] } ; 
+                    1: line_buf_fg_din <= { fg_colour, pix_data[7:4] } ; 
+                endcase
+            end else begin
+                case ( sp_x[1:0] )
+                    0: line_buf_fg_din <= { fg_colour, pix_data[4], pix_data[0], pix_data[12], pix_data[8]  } ; 
+                    1: line_buf_fg_din <= { fg_colour, pix_data[5], pix_data[1], pix_data[13], pix_data[9]  } ; 
+                    2: line_buf_fg_din <= { fg_colour, pix_data[6], pix_data[2], pix_data[14], pix_data[10] } ; 
+                    3: line_buf_fg_din <= { fg_colour, pix_data[7], pix_data[3], pix_data[15], pix_data[11] } ; 
+                endcase
+            end
             if ( x < 256 ) begin
                 if ( sp_x[0] == 1'b1 ) begin
                     tile_state <= 1;
                 end
                 x <= x + 1;
             end else begin
-                tile_state <= 7;
+                tile_state <= 8;
                 line_buf_fg_w <= 0;
             end
-        end else if ( tile_state == 7) begin
+        end else if ( tile_state == 8) begin
             x <= 0;
             tile_state <= 0;  
         end
@@ -926,7 +944,11 @@ always @ (posedge clk_sys) begin
             sprite_state <= 8;
         end else if ( sprite_state == 8 ) begin
             // tile colour ready
-            sprite_colour <= sprite_ram_dout[7:0] ; // 0xff
+            if ( pcb < 5 ) begin
+                sprite_colour <= sprite_ram_dout[7:0] ; // 0xff
+            end else begin
+                sprite_colour <= sprite_ram_dout[6:0] ; // 0x7f
+            end
             sprite_state <= 9;
         end else if ( sprite_state == 9 ) begin
             // tile index ready
@@ -938,7 +960,7 @@ always @ (posedge clk_sys) begin
                 sprite_flip_x   <= sprite_ram_dout[15] ;
                 sprite_flip_y   <= 1'b0;  // 0x8000
                 sprite_tile_num <= sprite_ram_dout[14:0] ;
-            end else if ( pcb == 2 ) begin                
+            end else if ( pcb == 2 || pcb == 5 ) begin                
                 sprite_flip_x   <= sprite_ram_dout[14] ;
                 sprite_flip_y   <= sprite_ram_dout[15] ;
                 sprite_tile_num <= sprite_ram_dout[13:0] ;  
@@ -1047,54 +1069,46 @@ wire [7:0] dac_weight[0:63] = '{8'd0,8'd13,8'd22,8'd34,8'd46,8'd57,8'd65,8'd75,8
                                 8'd0, 8'd7,8'd17,8'd28,8'd41,8'd52,8'd60,8'd71,8'd87,8'd96,8'd103,8'd112,8'd122,8'd130,8'd136,8'd144,
                                 8'd165,8'd172,8'd177,8'd184,8'd191,8'd197,8'd202,8'd208,8'd218,8'd223,8'd227,8'd233,8'd239,8'd244,8'd248,8'd253};
 
-// bit 15 is dimming bit. 
-//wire [5:0] r_pal = { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
-//wire [5:0] g_pal = { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
-//wire [5:0] b_pal = { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
-                  
+                 
 reg [5:0] r_pal ;
 reg [5:0] g_pal ;
 reg [5:0] b_pal ;
 
 always @ (posedge clk_sys) begin
-    if ( reset == 1 ) begin
-        // randomize palette
-        if ( ioctl_wr == 1 && ( ioctl_dout != 0 ) ) begin
-            tile_pal_wr <= 1 ;
-            tile_pal_addr <= tile_pal_addr + 1 ;
-            tile_pal_din <= { ioctl_dout, ~ioctl_dout } ;
-        end
-    end else begin
-        tile_pal_wr <= 0;
-        if ( hc < 257 ) begin
-            if ( clk6_count == 1 ) begin
-                line_buf_addr_r <= { ~vc[0], 1'b0, hc[7:0] ^ { 8 { flip_dip } } } ; //( flip_dip == 0 ) ? hc[7:0] : ~hc[7:0] };
-            end else if ( clk6_count == 2 ) begin
-                fg <= line_buf_fg_out[11:0] ;
-                sp <= spr_buf_dout[11:0] ;
-            end else if ( clk6_count == 3 ) begin
-                pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 means tile is opaque 
-                //pen <= sp[11:0] ;
-            end else if ( clk6_count == 4 ) begin
-                if ( pen[3:0] == 0 ) begin
+
+    tile_pal_wr <= 0;
+
+    if ( hc < 257 ) begin
+        if ( clk6_count == 1 ) begin
+            line_buf_addr_r <= { ~vc[0], 1'b0, hc[7:0] ^ { 8 { flip_dip } } } ; //( flip_dip == 0 ) ? hc[7:0] : ~hc[7:0] };
+        end else if ( clk6_count == 2 ) begin
+            fg <= line_buf_fg_out[11:0] ;
+            sp <= spr_buf_dout[11:0] ;
+        end else if ( clk6_count == 3 ) begin
+            pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 means tile is opaque 
+            //pen <= sp[11:0] ;
+        end else if ( clk6_count == 4 ) begin
+            if ( pen[3:0] == 0 ) begin
+                if ( pcb < 5 ) begin
                     tile_pal_addr <= 12'hfff ; // background pen
                 end else begin
-                    tile_pal_addr <= pen[11:0] ;
+                    tile_pal_addr <= 12'h7ff ; // background pen
                 end
-            end else if ( clk6_count == 6 ) begin
-                r_pal <= { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
-                g_pal <= { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
-                b_pal <= { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
-            end else if ( clk6_count == 7 ) begin
-                rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
+            end else begin
+                tile_pal_addr <= pen[11:0] ;
             end
+        end else if ( clk6_count == 6 ) begin
+            r_pal <= { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
+            g_pal <= { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
+            b_pal <= { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
+        end else if ( clk6_count == 7 ) begin
+            rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
         end
     end
 end
 
-
 reg spr_flip_orientation ;
-reg [3:0] tile_bank;
+reg [7:0] tile_bank;
 reg [1:0] vbl_sr;
 reg [1:0] hbl_sr;
 
@@ -1385,6 +1399,10 @@ always @ (posedge clk_sys) begin
                     spr_flip_orientation <= m68k_dout[2] ;
                 end
  
+                if ( pcb > 4 && m68k_lds_n == 0 && input_dsw1_cs == 1 ) begin // LDS 0xc00xx
+                    tile_bank[m68k_a[5:3]] <= m68k_a[6] ;  // 
+                end
+
             end 
         end
         
