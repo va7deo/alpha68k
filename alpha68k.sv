@@ -1247,14 +1247,14 @@ always @ (posedge clk_sys) begin
 
                                 // set coin id
                                 if ( pcb == 0 || pcb == 4 || pcb == 5 ) begin
-                                    if ( pcb == 0 ) begin
-                                        mcu_din <= 8'h22 ;
-                                    end else begin
+                                    if ( pcb == 4 ) begin
                                         if ( coin_a == 1 ) begin
                                             mcu_din <= 8'h23 ;
                                         end else begin
                                             mcu_din <= 8'h24 ;
                                         end
+                                    end else begin
+                                        mcu_din <= 8'h22 ;
                                     end
                                     
                                     if ( coin_a == 1 ) begin
