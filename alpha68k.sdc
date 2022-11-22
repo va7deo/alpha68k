@@ -7,6 +7,8 @@ set_false_path -from [get_clocks {pll_hdmi|pll_hdmi_inst|altera_pll_i|cyclonev_p
 
 set_false_path -from [get_clocks {emu|pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}] -to [get_clocks {emu|pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}]
 
+create_generated_clock -name clk_3M -source [get_nets {emu|pll|pll_inst|altera_pll_i|outclk_wire[0]}] -divide_by 24 [get_nets {emu|clk_3M}]
+
 # create_clock -name clk_4M -period "4.0 MHz" [get_nets {emu|clk_4M}]
 create_generated_clock -name clk_4M -source [get_nets {emu|pll|pll_inst|altera_pll_i|outclk_wire[0]}] -divide_by 18 [get_nets {emu|clk_4M}]
 

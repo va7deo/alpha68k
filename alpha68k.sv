@@ -1197,25 +1197,7 @@ always @ (posedge clk_sys) begin
             m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid : 
                             m68k_rom_2_cs ? !m68k_rom_2_valid : 
                             0; 
-
-            // select cpu data input based on what is active 
-//            m68k_din <=  m68k_rom_cs ? m68k_rom_data :
-//                         m68k_rom_2_cs ? m68k_rom_2_data :
-//                         m68k_ram_cs  ? m68k_ram_dout :
-//                         // high byte of even addressed sprite ram not connected.  pull high.
-//                         m68k_spr_cs  ? ( m68k_a[1] == 0 ) ? ( m68k_sprite_dout | 16'hff00 ) : m68k_sprite_dout : // 0xff000000
-//                         m68k_fg_ram_cs ? m68k_fg_ram_dout :
-//                         m68k_pal_cs ? m68k_pal_dout :
-//                         m_invert_ctrl_cs ? 0 :
-//                         (input_p1_cs & !input_p2_cs ) ? p1 :  
-//                         (input_p2_cs & !input_p1_cs ) ? p2 :
-//                         (input_p2_cs &  input_p1_cs ) ? { p2[7:0], p1[7:0] } :
-//                         input_dsw1_cs ? dsw1 :
-//                         input_dsw2_cs ? dsw2 :
-//                         input_coin_cs ? coin :
-//                         z80_latch_read_cs ? { z80_latch, z80_latch } :
-//                         16'd0;
-                         
+                        
             if ( m68k_rw == 1 ) begin                          
                 // reads
                 m68k_din <=  m68k_rom_cs ? m68k_rom_data :
@@ -1225,11 +1207,11 @@ always @ (posedge clk_sys) begin
                              m68k_spr_cs  ? m68k_sprite_dout : // 0xff000000
                              m68k_fg_ram_cs ? m68k_fg_ram_dout :
                              m68k_pal_cs ? m68k_pal_dout :
-                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
-                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
                              input_p1_cs ? { p2, p1 } :
                              input_dsw1_cs ? dsw1 :
                              m68k_sp85_cs ? 0 : 
+                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
+                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
                              16'h0000;
 
                 // mcu addresses are word 
@@ -1264,7 +1246,7 @@ always @ (posedge clk_sys) begin
                                 coin_latch <= { coin_b, coin_a };
 
                                 // set coin id
-                                if ( pcb == 0 || pcb == 4 ) begin
+                                if ( pcb == 0 || pcb == 4 || pcb == 5 ) begin
                                     if ( pcb == 0 ) begin
                                         mcu_din <= 8'h22 ;
                                     end else begin
@@ -1334,8 +1316,10 @@ always @ (posedge clk_sys) begin
                                 mcu_addr <= 13'h00fe;
                                 mcu_din <= 8'h85 ;
                                 mcu_wl <= 1;
-                            end else begin
-                                mcu_din <= 8'h00 ;
+                            end else if ( pcb > 4 ) begin
+                                mcu_addr <= 13'h00fe;
+                                mcu_din <= 8'h87 ;
+                                mcu_wl <= 1;
                             end
                         end else if ( m68k_a[8:1] == 8'hff ) begin
                             // mcu id low
@@ -1351,8 +1335,10 @@ always @ (posedge clk_sys) begin
                                 mcu_addr <= 13'h00ff;
                                 mcu_din <= 8'h12 ;
                                 mcu_wl <= 1;
-                            end else begin
-                                mcu_din <= 8'h00 ;
+                            end else if ( pcb > 4 ) begin
+                                mcu_addr <= 13'h00ff;
+                                mcu_din <= 8'h13 ;
+                                mcu_wl <= 1;
                             end
                         end
                     end
@@ -1377,9 +1363,6 @@ always @ (posedge clk_sys) begin
                 
                 if ( cpu_int_clr_cs == 1 ) begin
                     m68k_ipl1_n <= 1;
-                end 
-
-                if ( watchdog_clr_cs == 1 ) begin
                 end 
                 
             end else begin        

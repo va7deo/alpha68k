@@ -104,7 +104,6 @@ always @ (*) begin
 
             input_coin_cs    <= m68k_cs( 24'h080004, 24'h080005 ) ;
             
-            
 //            m68k_spr_flip_cs <= m68k_cs( 24'h0c0000, 24'h0c0001 );
             
             input_dsw1_cs     <= m68k_cs( 24'h0c0000, 24'h0c0001 ) ;
@@ -115,6 +114,10 @@ always @ (*) begin
             
             input_dsw2_cs    <= 0 ;
             m68k_coin_cs     <= 0 ;
+            
+            m68k_rotary2_cs  <= 0 ;
+
+            m68k_rotary1_cs  <= 0 ;
             
             m68k_sp85_cs     <= m68k_cs( 24'h300000, 24'h303fff ) ;
             
@@ -169,11 +172,14 @@ always @ (*) begin
             
             
 //            m68k_spr_flip_cs <= m68k_cs( 24'h0c0000, 24'h0c0001 );
+
+            input_dsw1_cs    <= m68k_cs( 24'h0c0000, 24'h0c007f ) ;
             
-           
-            input_dsw1_cs     <= m68k_cs( 24'h0c0000, 24'h0c007f ) ;
+            m68k_rotary2_cs  <= m68k_cs( 24'h0c8000, 24'h0c8001 ) ;
+
+            m68k_rotary1_cs  <= m68k_cs( 24'h0d0000, 24'h0d0001 ) ;
             
-            m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff )  ;
+            m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff ) ;
             
             m68k_spr_cs      <= m68k_cs( 24'h200000, 24'h207fff ) ;
             
