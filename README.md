@@ -74,7 +74,7 @@ X-1  (24 MHZ)           | ALPHA-68K96V (GW)  | 24.000     | Z80 CLK (6MHZ)<br><b
 X-2  (20 MHZ)           | ALPHA-68K96V (GW)  | 20.000     | M68000 CLK (10 MHZ)                                                                          |
 X-3  (3.579545 MHz)     | ALPHA-68K96V (GW)  | 3.579545   | YM2413 CLK (3.579545 MHz)                                                                    |
 X-1  (3.579545 MHz)     | ALPHA-68K96II (SS) | 24.000     | YM2413 CLK (3.579545 MHz)                                                                    |
-X-2  (18 MHZ)           | ALPHA-68K96II (SS) | 20.000     | M68000 CLK (9 MHZ)                                                                           |
+X-2  (18 MHZ)           | ALPHA-68K96II (SS) | 18.000     | M68000 CLK (9 MHZ)                                                                           |
 X-3  (24 MHZ)           | ALPHA-68K96II (SS) | 3.579545   | Z80 CLK (6MHZ)<br><br>YM2203 (CLK 3 MHZ)<br><br>Sprite CLK (12 MHZ)<br><br>Pixel CLK (6 MHZ) |
 
 **Pixel clock:** 6.00 MHz

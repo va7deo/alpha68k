@@ -1,11 +1,11 @@
 <misterromdescription>
-    <name>Time Soldiers (US Rev 3)</name>
-    <setname>timesold</setname>
+    <name>Battle Field (Japan)</name>
+    <setname>btlfield</setname>
     <rbf>alpha68k</rbf>
     <mameversion>0249</mameversion>
     <year>1987</year>
     <manufacturer>Alpha Denshi Co.</manufacturer>
-    <region>US</region>
+    <region>Japan</region>
     <joystick>Rotary</joystick>
     <rotation>vertical (cw)</rotation>
 
@@ -28,12 +28,12 @@
         <part>06</part>
     </rom>
 
-    <rom index="0" zip="timesold.zip" md5="None">
+    <rom index="0" zip="btlfield.zip|timesold.zip" md5="None">
 
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
-            <part name="bf.3" crc="a491e533" map="01"/>
-            <part name="bf.4" crc="34ebaccc" map="10"/>
+            <part name="bfv1_03.bin" crc="8720af0d" map="01"/>
+            <part name="bfv1_04.bin" crc="7dcccbe6" map="10"/>
         </interleave>
         <interleave output="16">
             <part name="bf.1" crc="158f4cb3" map="01"/>
@@ -51,8 +51,8 @@
 
         <!-- gfx1 - starts at 0x100000 -->
         <interleave output="16">
-            <part name="bf.5" crc="3cec2f55" map="01"/>
-            <part name="bf.6" crc="086a364d" map="10"/>
+            <part name="bfv1_05.bin" crc="be269dbf" map="01"/>
+            <part name="bfv1_06.bin" crc="022b9de9" map="10"/>
         </interleave>
         <part repeat="0xF0000"> FF</part>
 
@@ -76,9 +76,6 @@
             <part name="bf.21" crc="bc3b3944" map="1000"/>
         </interleave>
 
-        <!-- mcu - starts at 0x380000 -->
-        <!-- <part name="alpha.mcu" crc=""/> -->
-
-        <!-- Total 0x381000 bytes - 3588 kBytes -->
+        <!-- Total 0x380000 bytes - 3584 kBytes -->
     </rom>
 </misterromdescription>
