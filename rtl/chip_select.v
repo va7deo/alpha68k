@@ -30,7 +30,6 @@ module chip_select
     output reg input_p2_cs,
     output reg input_dsw1_cs,
     output reg input_dsw2_cs,
-    output reg input_coin_cs,
 
     output reg m68k_rotary1_cs,
     output reg m68k_rotary2_cs,
@@ -86,6 +85,7 @@ localparam SKYADVU     = 4;
 localparam SKYSOLDR    = 5;
 localparam TIMESOLD    = 6;
 localparam GOLDMEDL    = 7;
+localparam BATFIELD    = 8;
 
 
 always @ (*) begin
@@ -102,8 +102,6 @@ always @ (*) begin
             
             input_p2_cs      <= 0 ;
 
-            input_coin_cs    <= m68k_cs( 24'h080004, 24'h080005 ) ;
-            
 //            m68k_spr_flip_cs <= m68k_cs( 24'h0c0000, 24'h0c0001 );
             
             input_dsw1_cs     <= m68k_cs( 24'h0c0000, 24'h0c0001 ) ;
@@ -157,7 +155,7 @@ always @ (*) begin
             z80_bank_set_cs   <= ( z80_addr[3:1] == 3'b111 ) && ( !IORQ_n ) && (!WR_n); // select latches z80 D[4:0]
         end
 
-        SKYSOLDR, TIMESOLD, GOLDMEDL: begin
+        SKYSOLDR, TIMESOLD, GOLDMEDL, BATFIELD: begin
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
             
             m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h040fff ) ;
@@ -168,16 +166,14 @@ always @ (*) begin
             
             input_p2_cs      <= 0 ;
 
-            input_coin_cs    <= m68k_cs( 24'h080004, 24'h080005 ) ;
-            
-            
 //            m68k_spr_flip_cs <= m68k_cs( 24'h0c0000, 24'h0c0001 );
 
             input_dsw1_cs    <= m68k_cs( 24'h0c0000, 24'h0c007f ) ;
             
-            m68k_rotary2_cs  <= m68k_cs( 24'h0c8000, 24'h0c8001 ) ;
+            //m68k_rotary2_cs  <= m68k_cs( 24'h0c8000, 24'h0c8001 ) ;
+            m68k_rotary2_cs  <= 0 ;
 
-            m68k_rotary1_cs  <= m68k_cs( 24'h0d0000, 24'h0d0001 ) ;
+            m68k_rotary1_cs  <= 0 ;
             
             m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff ) ;
             
@@ -193,13 +189,13 @@ always @ (*) begin
             m68k_rom_2_cs    <= m68k_cs( 24'h800000, 24'h83ffff ) ;
             
             // reset microcontroller interrupt 
-            cpu_int_clr_cs    <= m68k_cs( 24'h0d8000, 24'h0dffff ) ; // tst.b $d8000.l
+            cpu_int_clr_cs    <= 0 ;//m68k_cs( 24'h0d8000, 24'h0dffff ) ; // tst.b $d8000.l
             
             // reset vblank interrupt 
-            vbl_int_clr_cs    <= m68k_cs( 24'h0e0000, 24'h0e7fff ) ; // tst.b $e0000.l
+            vbl_int_clr_cs    <= 0 ;//m68k_cs( 24'h0e0000, 24'h0e7fff ) ; // tst.b $e0000.l
             
             // reset watchdog interrupt ( implement? )
-            watchdog_clr_cs   <= m68k_cs( 24'h0e8000, 24'h0effff ) ; // tst.b $e8000.l
+            watchdog_clr_cs   <= 0; //m68k_cs( 24'h0e8000, 24'h0effff ) ; // tst.b $e8000.l
              
             z80_rom_cs        <= ( MREQ_n == 0 && z80_addr[15:0] <  16'h8000 );
             z80_ram_cs        <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'h8000 && z80_addr[15:0] < 16'h8800 );

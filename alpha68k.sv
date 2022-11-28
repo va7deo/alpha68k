@@ -350,9 +350,13 @@ always @ (posedge clk_sys ) begin
     p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
     
     coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
-    
-    dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
-    dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
+    if ( pcb < 6 || pcb == 8 ) begin
+        dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
+        dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
+    end else begin
+        dsw1 <=  {8'h00, ~sw[0][7:2], key_test,key_service };  // 
+        dsw2 <=  {8'h00, ~sw[1][7:0] };  // sw[1][1:0] not used? debugging
+    end
     
     flip_dip <= ~dsw2[4] ;
 
@@ -613,12 +617,24 @@ always @ (posedge clk_sys) begin
     end
 
     // fractional divider 20MHz from 72
-    clk_20M <= 0;
-    if ( clk20_count > 17 ) begin
-        clk_20M <= 1 ;
-        clk20_count <= clk20_count - 12;
-    end else if ( pause_cpu == 0 )  begin
-        clk20_count <= clk20_count + 5;
+    if ( pause_cpu == 0 ) begin
+        if ( pcb < 5 ) begin
+            clk_20M <= 0;
+            if ( clk20_count > 17 ) begin
+                clk_20M <= 1 ;
+                clk20_count <= clk20_count - 12;
+            end else begin
+                clk20_count <= clk20_count + 5;
+            end
+        end else begin
+            // 18MHZ
+            clk_20M <= ( clk20_count == 0 );
+            if ( clk20_count == 3 ) begin 
+                clk20_count <= 0;
+            end else begin
+                clk20_count <= clk20_count + 1;
+            end
+        end
     end
     
     clk_io <= ( clk_io_count == 0 ) ;
@@ -659,8 +675,8 @@ always @ ( posedge clk_6M ) begin
 end
 
 video_timing video_timing (
-    .clk(clk_6M),
-    .clk_pix(1'b1),
+    .clk(clk_sys),
+    .clk_pix(clk_6M),
     .pcb(pcb),
     .hc(hc),
     .vc(vc),
@@ -810,8 +826,9 @@ always @ (posedge clk_sys) begin
             fg_ram_addr <= fg_ram_addr + 1;
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
+            // [15:0] fg_rom_addr
             if ( pcb < 5 ) begin
-                fg_rom_addr <= { tile_bank[2:0], fg_ram_dout[7:0], ~sp_x[2], sp_x[1]  , sp_y[2:0] } ;
+                fg_rom_addr <= { tile_bank[2:0], fg_ram_dout[7:0], ~sp_x[2], sp_x[1], sp_y[2:0] } ;
             end else begin
                 fg_rom_addr <= { tile_bank[6:4], fg_ram_dout[7:0], ~sp_x[2], sp_y[2:0], 1'b0 } ;
             end
@@ -960,7 +977,7 @@ always @ (posedge clk_sys) begin
                 sprite_flip_x   <= sprite_ram_dout[15] ;
                 sprite_flip_y   <= 1'b0;  // 0x8000
                 sprite_tile_num <= sprite_ram_dout[14:0] ;
-            end else if ( pcb == 2 || pcb == 5 ) begin                
+            end else begin                
                 sprite_flip_x   <= sprite_ram_dout[14] ;
                 sprite_flip_y   <= sprite_ram_dout[15] ;
                 sprite_tile_num <= sprite_ram_dout[13:0] ;  
@@ -1001,10 +1018,6 @@ always @ (posedge clk_sys) begin
                 sprite_rom_cs <= 0;
                 spr_pix_data_fifo <= sprite_rom_data;
                 
-//                if ( spr_x_ofs >= 7 ) begin
-//                    spr_pix_data      <= sprite_rom_data ;
-//                    //sprite_state <= 10;
-//                end
             end else if ( sprite_rom_cs == 0 || spr_x_ofs < 7 ) begin
                 //
                 spr_buf_addr_w <= { vc[0], spr_x_pos };
@@ -1020,7 +1033,6 @@ always @ (posedge clk_sys) begin
                     // the second 8 pixel needs another rom read
                     if ( spr_x_ofs == 7 ) begin
                         spr_pix_data <= spr_pix_data_fifo ;
-                        //sprite_state <= 10;
                     end
                     
                 end else begin
@@ -1246,8 +1258,8 @@ always @ (posedge clk_sys) begin
                                 coin_latch <= { coin_b, coin_a };
 
                                 // set coin id
-                                if ( pcb == 0 || pcb == 4 || pcb == 5 ) begin
-                                    if ( pcb == 4 ) begin
+                                if ( pcb == 0 || pcb > 3 ) begin // 0, 4, 5, 6, 7
+                                    if ( pcb > 3 ) begin // 4, 5, 6, 7
                                         if ( coin_a == 1 ) begin
                                             mcu_din <= 8'h23 ;
                                         end else begin
@@ -1479,7 +1491,6 @@ wire    input_p1_cs;
 wire    input_p2_cs;
 wire    m68k_rotary1_cs;
 wire    m68k_rotary2_cs;
-wire    input_coin_cs;
 wire    input_dsw1_cs;
 wire    input_dsw2_cs;
 wire    irq_z80_cs;
@@ -1533,7 +1544,6 @@ chip_select cs (
     .m68k_rotary2_cs,
 
     .input_p2_cs,
-    .input_coin_cs,
     .input_p1_cs,
     .input_dsw1_cs,
     .input_dsw2_cs,
@@ -2178,17 +2188,17 @@ rom_controller rom_controller
     .clk(clk_sys),
 
     // program ROM interface
-//    .prog_rom_cs(m68k_rom_cs),
-//    .prog_rom_oe(1),
-//    .prog_rom_addr(m68k_a[23:1]),
-//    .prog_rom_data(m68k_rom_data),
-//    .prog_rom_data_valid(m68k_rom_valid),
-
-    .prog_rom_cs(prog_cache_rom_cs),
+    .prog_rom_cs(m68k_rom_cs),
     .prog_rom_oe(1),
-    .prog_rom_addr(prog_cache_addr),
-    .prog_rom_data(prog_cache_data),
-    .prog_rom_data_valid(prog_cache_valid),
+    .prog_rom_addr(m68k_a[23:1]),
+    .prog_rom_data(m68k_rom_data),
+    .prog_rom_data_valid(m68k_rom_valid),
+
+//    .prog_rom_cs(prog_cache_rom_cs),
+//    .prog_rom_oe(1),
+//    .prog_rom_addr(prog_cache_addr),
+//    .prog_rom_data(prog_cache_data),
+//    .prog_rom_data_valid(prog_cache_valid),
 
     .prog_rom_2_cs(m68k_rom_2_cs),
     .prog_rom_2_oe(1),
@@ -2240,23 +2250,23 @@ rom_controller rom_controller
     .sdram_q(sdram_q)
   );
 
-cache prog_cache
-(
-    .reset(reset),
-    .clk(clk_sys),
-
-    // client
-    .cache_req(m68k_rom_cs),
-    .cache_addr(m68k_a[17:1]),
-    .cache_valid(m68k_rom_valid),
-    .cache_data(m68k_rom_data),
-
-    // to rom controller
-    .rom_req(prog_cache_rom_cs),
-    .rom_addr(prog_cache_addr),
-    .rom_valid(prog_cache_valid),
-    .rom_data(prog_cache_data)
-); 
+//cache prog_cache
+//(
+//    .reset(reset),
+//    .clk(clk_sys),
+//
+//    // client
+//    .cache_req(m68k_rom_cs),
+//    .cache_addr(m68k_a[17:1]),
+//    .cache_valid(m68k_rom_valid),
+//    .cache_data(m68k_rom_data),
+//
+//    // to rom controller
+//    .rom_req(prog_cache_rom_cs),
+//    .rom_addr(prog_cache_addr),
+//    .rom_valid(prog_cache_valid),
+//    .rom_data(prog_cache_data)
+//); 
 
 //tile_cache tile_cache
 //(
