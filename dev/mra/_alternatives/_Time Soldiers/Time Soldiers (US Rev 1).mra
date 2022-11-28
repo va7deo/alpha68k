@@ -1,6 +1,6 @@
 <misterromdescription>
-    <name>Time Soldiers (US Rev 3)</name>
-    <setname>timesold</setname>
+    <name>Time Soldiers (US Rev 1)</name>
+    <setname>timesold1</setname>
     <rbf>alpha68k</rbf>
     <mameversion>0249</mameversion>
     <year>1987</year>
@@ -15,7 +15,7 @@
         <dip name="Difficulty" bits="3,4" ids="Easy,Hard,Normal"/>
         <dip name="Language" bits="5" ids="English,Japanese"/>
         <dip name="Unused" bits="6" ids="On,Off"/>
-        <dip name="Invulnerability" bits="7" ids="On,Off"/>
+        <dip name="Invulnerability (Cheat)" bits="7" ids="On,Off"/>
         <!-- IN4 -->
         <dip name="Coinage" bits="8,10" ids="A 3C/2C B 8C/1C,A 2C/3C B 7C/1C,A 1C/6C B 6C/1C,A 1C/5C B 5C/1C,A 1C/4C B 4C/1C,A 1C/3C B 3C/1C,A 1C/2C B 2C/1C,A 1C/1C B 1C/1C"/>
         <dip name="Demo Sounds" bits="11" ids="On,Off"/>
@@ -28,12 +28,12 @@
         <part>06</part>
     </rom>
 
-    <rom index="0" zip="timesold.zip" md5="None">
+    <rom index="0" zip="timesold1.zip|timesold.zip" md5="None">
 
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
-            <part name="bf.3" crc="a491e533" map="01"/>
-            <part name="bf.4" crc="34ebaccc" map="10"/>
+            <part name="3" crc="bc069a29" map="01"/>
+            <part name="4" crc="ac7dca56" map="10"/>
         </interleave>
         <interleave output="16">
             <part name="bf.1" crc="158f4cb3" map="01"/>
