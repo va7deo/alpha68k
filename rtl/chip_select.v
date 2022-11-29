@@ -33,6 +33,7 @@ module chip_select
 
     output reg m68k_rotary1_cs,
     output reg m68k_rotary2_cs,
+    output reg m68k_rotary_lsb_cs,
 
     output reg vbl_int_clr_cs,
     output reg cpu_int_clr_cs,
@@ -91,7 +92,7 @@ localparam BATFIELD    = 8;
 always @ (*) begin
     // Memory mapping based on PCB type
     case (pcb)
-        SKYADV, GANGWARS, SBASEBALJ, SKYADVU: begin
+        SKYADV, GANGWARS, SBASEBALJ, SBASEBAL, SKYADVU: begin
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
             
             m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h043fff ) ;
@@ -155,7 +156,7 @@ always @ (*) begin
             z80_bank_set_cs   <= ( z80_addr[3:1] == 3'b111 ) && ( !IORQ_n ) && (!WR_n); // select latches z80 D[4:0]
         end
 
-        SKYSOLDR, TIMESOLD, GOLDMEDL, BATFIELD: begin
+        SKYSOLDR, GOLDMEDL: begin
             m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
             
             m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h040fff ) ;
@@ -216,6 +217,71 @@ always @ (*) begin
             // 0x0c-0x0d
             z80_ym2203_cs     <= ( z80_addr[3:1] == 3'b110 ) && ( !IORQ_n ) && (!WR_n); 
             
+            // 0x0E-0x0F
+            z80_bank_set_cs   <= ( z80_addr[3:1] == 3'b111 ) && ( !IORQ_n ) && (!WR_n); // select latches z80 D[4:0]
+        end
+
+
+        TIMESOLD, BATFIELD: begin
+            m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
+
+            m68k_ram_cs      <= m68k_cs( 24'h040000, 24'h040fff ) ;
+
+            m68k_latch_cs    <= m68k_cs( 24'h080000, 24'h080001 ) & !m68k_rw ;
+
+            input_p1_cs      <= m68k_cs( 24'h080000, 24'h080001 ) & m68k_rw ;
+
+            input_p2_cs      <= 0 ;
+
+            input_dsw1_cs    <= m68k_cs( 24'h0c0000, 24'h0c007f ) ;
+
+            m68k_rotary1_cs  <= m68k_cs( 24'h0c0000, 24'h0c0001 ) ;
+
+            m68k_rotary2_cs  <= m68k_cs( 24'h0c8000, 24'h0c8001 ) ;
+
+            m68k_rotary_lsb_cs  <= m68k_cs( 24'h0d0000, 24'h0d0001 ) ;
+
+            m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff ) ;
+
+            m68k_spr_cs      <= m68k_cs( 24'h200000, 24'h207fff ) ;
+
+            input_dsw2_cs    <= 0 ;
+            m68k_coin_cs     <= 0 ;
+
+            m68k_sp85_cs     <= m68k_cs( 24'h300000, 24'h303fff ) ;
+
+            m68k_pal_cs      <= m68k_cs( 24'h400000, 24'h400fff ) ;
+
+            m68k_rom_2_cs    <= m68k_cs( 24'h800000, 24'h83ffff ) ;
+
+            // reset microcontroller interrupt 
+            cpu_int_clr_cs    <= 0 ;//m68k_cs( 24'h0d8000, 24'h0dffff ) ; // tst.b $d8000.l
+
+            // reset vblank interrupt 
+            vbl_int_clr_cs    <= 0 ;//m68k_cs( 24'h0e0000, 24'h0e7fff ) ; // tst.b $e0000.l
+
+            // reset watchdog interrupt ( implement? )
+            watchdog_clr_cs   <= 0; //m68k_cs( 24'h0e8000, 24'h0effff ) ; // tst.b $e8000.l
+
+            z80_rom_cs        <= ( MREQ_n == 0 && z80_addr[15:0] <  16'h8000 );
+            z80_ram_cs        <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'h8000 && z80_addr[15:0] < 16'h8800 );
+            z80_banked_cs     <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'hc000 );
+
+            // read latch.  latch is active on all i/o reads
+            z80_latch_cs      <= (!IORQ_n) && (!RD_n) ; 
+
+            z80_latch_clr_cs  <= ( z80_addr[3:1] == 3'b000 ) && ( !IORQ_n ) && (!WR_n);  
+
+            // only the lower 4 bits are used to decode port
+            // 0x08-0x09
+            z80_dac_cs        <= ( z80_addr[3:1] == 3'b100 ) && ( !IORQ_n ) && (!WR_n) ; // 8 bit DAC
+
+            // 0x0a-0x0b
+            z80_ym2413_cs     <= ( z80_addr[3:1] == 3'b101 ) && ( !IORQ_n ) && (!WR_n); 
+
+            // 0x0c-0x0d
+            z80_ym2203_cs     <= ( z80_addr[3:1] == 3'b110 ) && ( !IORQ_n ) && (!WR_n); 
+
             // 0x0E-0x0F
             z80_bank_set_cs   <= ( z80_addr[3:1] == 3'b111 ) && ( !IORQ_n ) && (!WR_n); // select latches z80 D[4:0]
         end

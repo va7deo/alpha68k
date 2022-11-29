@@ -248,9 +248,11 @@ localparam CONF_STR = {
     "-;",
     "P3,Debug Settings;",
     "P3-;",
-    "P3o6,Swap P1/P2 Joystick,Off,On;",
     "P3OI,P1 Rotary Type,Gamepad,LS-30;",
     "P3OJ,P2 Rotary Type,Gamepad,LS-30;",
+    "P3-;",
+    "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3-;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
@@ -334,8 +336,8 @@ wire [21:0] gamma_bus;
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
 reg [7:0] p1;
 reg [7:0] p2;
-reg [3:0] p3;
-reg [3:0] p4;
+reg [7:0] p3;
+reg [7:0] p4;
 reg [15:0] dsw1;
 reg [15:0] dsw2;
 reg [15:0] coin;
@@ -344,11 +346,17 @@ reg flip_dip ;
 //reg invert_input;
 //wire [7:0] invert_mask = { 8 {invert_input} } ;
 
-always @ (posedge clk_sys ) begin 
-    p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
-    
-    p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
-    
+always @ (posedge clk_sys ) begin
+    if ( pcb == 6 || pcb == 8 ) begin
+        p1   <=  { start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
+        p2   <=  { start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
+    end else if ( pcb == 7 ) begin
+        p1   <=  { start2, p2_buttons[2:0], start1, p1_buttons[2:0]} ;
+        p2   <=  { start4, p4_buttons[2:0], start3, p3_buttons[2:0]} ;
+    end else begin
+        p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
+        p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
+    end
     coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
     if ( pcb < 6 || pcb == 8 ) begin
         dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
@@ -357,9 +365,11 @@ always @ (posedge clk_sys ) begin
         dsw1 <=  {8'h00, ~sw[0][7:2], key_test,key_service };  // 
         dsw2 <=  {8'h00, ~sw[1][7:0] };  // sw[1][1:0] not used? debugging
     end
-    
-    flip_dip <= ~dsw2[4] ;
-
+    if ( pcb == 6 || pcb == 8 ) begin
+        flip_dip <= dsw1[2] ;
+    end else begin
+        flip_dip <= ~dsw2[4] ;
+    end
 end
 
 wire        p1_right;
@@ -374,38 +384,100 @@ wire        p2_down;
 wire        p2_up;
 wire [2:0]  p2_buttons;
 
+wire        p3_right;
+wire        p3_left;
+wire        p3_down;
+wire        p3_up;
 wire [2:0]  p3_buttons;
 
+wire        p4_right;
+wire        p4_left;
+wire        p4_down;
+wire        p4_up;
 wire [2:0]  p4_buttons;
 
 reg         p1_swap;
 
 always @ * begin
-    p1_right   <= joy0[0] | key_p1_right;
-    p1_left    <= joy0[1] | key_p1_left;
-    p1_down    <= joy0[2] | key_p1_down;
-    p1_up      <= joy0[3] | key_p1_up;
-    p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-    p2_right   <= joy1[0] | key_p2_right;
-    p2_left    <= joy1[1] | key_p2_left;
-    p2_down    <= joy1[2] | key_p2_down;
-    p2_up      <= joy1[3] | key_p2_up;
-    p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    p1_swap <= status[38];
 
-    p3_buttons <= joy2[6:4];
+    if ( status[38] == 0 ) begin
+        p1_right   <= joy0[0] | key_p1_right;
+        p1_left    <= joy0[1] | key_p1_left;
+        p1_down    <= joy0[2] | key_p1_down;
+        p1_up      <= joy0[3] | key_p1_up;
+        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-    p4_buttons <= joy3[6:4];
+        p2_right   <= joy1[0] | key_p2_right;
+        p2_left    <= joy1[1] | key_p2_left;
+        p2_down    <= joy1[2] | key_p2_down;
+        p2_up      <= joy1[3] | key_p2_up;
+        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    end else if ( pcb == 7 ) begin
+        p1_right   <= 0;
+        p1_left    <= 0;
+        p1_down    <= 0;
+        p1_up      <= 0;
+        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+        p2_right   <= 0;
+        p2_left    <= 0;
+        p2_down    <= 0;
+        p2_up      <= 0;
+        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+
+        p3_right   <= 0;
+        p3_left    <= 0;
+        p3_down    <= 0;
+        p3_up      <= 0;
+        p3_buttons <= joy2[6:4];
+
+        p4_right   <= 0;
+        p4_left    <= 0;
+        p4_down    <= 0;
+        p4_up      <= 0;
+        p4_buttons <= joy3[6:4];
+    end else begin
+        p1_right   <= joy0[0] | key_p1_right;
+        p1_left    <= joy0[1] | key_p1_left;
+        p1_down    <= joy0[2] | key_p1_down;
+        p1_up      <= joy0[3] | key_p1_up;
+        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+        p2_right   <= joy1[0] | key_p2_right;
+        p2_left    <= joy1[1] | key_p2_left;
+        p2_down    <= joy1[2] | key_p2_down;
+        p2_up      <= joy1[3] | key_p2_up;
+        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    end
 end
 
-wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
-wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
-wire        start3  = joy2[7]  | key_start_3p;
-wire        start4  = joy3[8]  | key_start_4p;
-wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
-wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
-wire        b_pause = joy0[11] | key_pause;
-wire        service = joy0[12] | key_test;
+wire start1;
+wire start2;
+wire start3;
+wire start4;
+wire coin_a;
+wire coin_b;
+wire b_pause;
+wire service;
+
+always @ * begin
+    if ( pcb == 7 ) begin
+        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+        start3  = joy0[12] | joy1[12] | joy2[12] | joy3[12] | key_start_3p;
+        start4  = joy0[13] | joy1[13] | joy2[13] | joy3[13] | key_start_4p;
+    end else begin
+        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
+        coin_b  = joy0[10] | joy1[10] | key_coin_b;
+        b_pause = joy0[11] | key_pause;
+        service = key_test;
+    end
+end
+
 
 // Keyboard handler
 
@@ -505,10 +577,19 @@ reg last_rot2_ccw ;
 wire p1_rotary_controller_type = status[18];
 wire p2_rotary_controller_type = status[19];
 
-wire rot1_cw  = joy0[12] | key_ls30_p1[0];
-wire rot1_ccw = joy0[13] | key_ls30_p1[1];
-wire rot2_cw  = joy1[12] | key_ls30_p2[0];
-wire rot2_ccw = joy1[13] | key_ls30_p2[1];
+wire rot1_cw;
+wire rot1_ccw;
+wire rot2_cw;
+wire rot2_ccw;
+
+always @ * begin
+    if ( pcb == 6 || pcb == 8 ) begin
+        rot1_cw  = joy0[12] | key_ls30_p1[0];
+        rot1_ccw = joy0[13] | key_ls30_p1[1];
+        rot2_cw  = joy1[12] | key_ls30_p2[0];
+        rot2_ccw = joy1[13] | key_ls30_p2[1];
+    end
+end
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
@@ -1224,6 +1305,7 @@ always @ (posedge clk_sys) begin
                              m68k_sp85_cs ? 0 : 
                              m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
                              m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
+                             m68k_rotary_lsb_cs ? ~{ rotary2[3:0], rotary1[3:0], 8'h0 } :
                              16'h0000;
 
                 // mcu addresses are word 
@@ -1491,6 +1573,7 @@ wire    input_p1_cs;
 wire    input_p2_cs;
 wire    m68k_rotary1_cs;
 wire    m68k_rotary2_cs;
+wire    m68k_rotary_lsb_cs;
 wire    input_dsw1_cs;
 wire    input_dsw2_cs;
 wire    irq_z80_cs;
@@ -1542,6 +1625,7 @@ chip_select cs (
 
     .m68k_rotary1_cs,
     .m68k_rotary2_cs,
+    .m68k_rotary_lsb_cs,
 
     .input_p2_cs,
     .input_p1_cs,
