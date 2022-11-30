@@ -351,8 +351,8 @@ always @ (posedge clk_sys ) begin
         p1   <=  { start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
         p2   <=  { start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
     end else if ( pcb == 7 ) begin
-        p1   <=  { start2, p2_buttons[2:0], start1, p1_buttons[2:0]} ;
-        p2   <=  { start4, p4_buttons[2:0], start3, p3_buttons[2:0]} ;
+        p1   <=  { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]} ;
+        p2   <=  { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]} ;
     end else begin
         p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
         p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
@@ -397,24 +397,11 @@ wire        p4_up;
 wire [2:0]  p4_buttons;
 
 reg         p1_swap;
-
 always @ * begin
-
+    
     p1_swap <= status[38];
 
-    if ( status[38] == 0 ) begin
-        p1_right   <= joy0[0] | key_p1_right;
-        p1_left    <= joy0[1] | key_p1_left;
-        p1_down    <= joy0[2] | key_p1_down;
-        p1_up      <= joy0[3] | key_p1_up;
-        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
-
-        p2_right   <= joy1[0] | key_p2_right;
-        p2_left    <= joy1[1] | key_p2_left;
-        p2_down    <= joy1[2] | key_p2_down;
-        p2_up      <= joy1[3] | key_p2_up;
-        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
-    end else if ( pcb == 7 ) begin
+    if ( pcb == 7 ) begin
         p1_right   <= 0;
         p1_left    <= 0;
         p1_down    <= 0;
@@ -439,17 +426,31 @@ always @ * begin
         p4_up      <= 0;
         p4_buttons <= joy3[6:4];
     end else begin
-        p1_right   <= joy0[0] | key_p1_right;
-        p1_left    <= joy0[1] | key_p1_left;
-        p1_down    <= joy0[2] | key_p1_down;
-        p1_up      <= joy0[3] | key_p1_up;
-        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+        if ( status[38] == 0 ) begin
+            p1_right   <= joy0[0] | key_p1_right;
+            p1_left    <= joy0[1] | key_p1_left;
+            p1_down    <= joy0[2] | key_p1_down;
+            p1_up      <= joy0[3] | key_p1_up;
+            p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-        p2_right   <= joy1[0] | key_p2_right;
-        p2_left    <= joy1[1] | key_p2_left;
-        p2_down    <= joy1[2] | key_p2_down;
-        p2_up      <= joy1[3] | key_p2_up;
-        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+            p2_right   <= joy1[0] | key_p2_right;
+            p2_left    <= joy1[1] | key_p2_left;
+            p2_down    <= joy1[2] | key_p2_down;
+            p2_up      <= joy1[3] | key_p2_up;
+            p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        end else begin
+            p2_right   <= joy0[0] | key_p1_right;
+            p2_left    <= joy0[1] | key_p1_left;
+            p2_down    <= joy0[2] | key_p1_down;
+            p2_up      <= joy0[3] | key_p1_up;
+            p2_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+            p1_right   <= joy1[0] | key_p2_right;
+            p1_left    <= joy1[1] | key_p2_left;
+            p1_down    <= joy1[2] | key_p2_down;
+            p1_up      <= joy1[3] | key_p2_up;
+            p1_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        end
     end
 end
 
@@ -466,6 +467,10 @@ always @ * begin
     if ( pcb == 7 ) begin
         start1  = joy0[7]  | joy1[7]  | key_start_1p;
         start2  = joy0[8]  | joy1[8]  | key_start_2p;
+        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
+        coin_b  = joy0[10] | joy1[10] | key_coin_b;
+        b_pause = joy0[11] | key_pause;
+        service = key_test;
         start3  = joy0[12] | joy1[12] | joy2[12] | joy3[12] | key_start_3p;
         start4  = joy0[13] | joy1[13] | joy2[13] | joy3[13] | key_start_4p;
     end else begin

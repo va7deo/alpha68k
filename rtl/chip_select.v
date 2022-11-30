@@ -118,6 +118,8 @@ always @ (*) begin
 
             m68k_rotary1_cs  <= 0 ;
             
+            m68k_rotary_msb_cs <= 0;
+			
             m68k_sp85_cs     <= m68k_cs( 24'h300000, 24'h303fff ) ;
             
             m68k_pal_cs      <= m68k_cs( 24'h400000, 24'h401fff ) ;
@@ -175,6 +177,8 @@ always @ (*) begin
             m68k_rotary2_cs  <= 0 ;
 
             m68k_rotary1_cs  <= 0 ;
+			
+            m68k_rotary_msb_cs <= 0;
             
             m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff ) ;
             
