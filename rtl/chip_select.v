@@ -33,7 +33,7 @@ module chip_select
 
     output reg m68k_rotary1_cs,
     output reg m68k_rotary2_cs,
-    output reg m68k_rotary_lsb_cs,
+    output reg m68k_rotary_msb_cs,
 
     output reg vbl_int_clr_cs,
     output reg cpu_int_clr_cs,
@@ -239,7 +239,7 @@ always @ (*) begin
 
             m68k_rotary2_cs  <= m68k_cs( 24'h0c8000, 24'h0c8001 ) ;
 
-            m68k_rotary_lsb_cs  <= m68k_cs( 24'h0d0000, 24'h0d0001 ) ;
+            m68k_rotary_msb_cs  <= m68k_cs( 24'h0d0000, 24'h0d0001 ) ;
 
             m68k_fg_ram_cs   <= m68k_cs( 24'h100000, 24'h100fff ) ;
 

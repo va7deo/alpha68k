@@ -1302,10 +1302,10 @@ always @ (posedge clk_sys) begin
                              m68k_pal_cs ? m68k_pal_dout :
                              input_p1_cs ? { p2, p1 } :
                              input_dsw1_cs ? dsw1 :
-                             m68k_sp85_cs ? 0 : 
-                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
-                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
-                             m68k_rotary_lsb_cs ? ~{ rotary2[3:0], rotary1[3:0], 8'h0 } :
+                             m68k_sp85_cs ? 0 :
+                             m68k_rotary1_cs ? ~{ rotary1[7:0], 8'h0 } :
+                             m68k_rotary2_cs ? ~{ rotary2[7:0], 8'h0 } :
+                             m68k_rotary_msb_cs ? ~{ rotary2[11:8], rotary1[11:8], 8'h0 } :
                              16'h0000;
 
                 // mcu addresses are word 
@@ -1573,7 +1573,7 @@ wire    input_p1_cs;
 wire    input_p2_cs;
 wire    m68k_rotary1_cs;
 wire    m68k_rotary2_cs;
-wire    m68k_rotary_lsb_cs;
+wire    m68k_rotary_msb_cs;
 wire    input_dsw1_cs;
 wire    input_dsw2_cs;
 wire    irq_z80_cs;
@@ -1625,7 +1625,7 @@ chip_select cs (
 
     .m68k_rotary1_cs,
     .m68k_rotary2_cs,
-    .m68k_rotary_lsb_cs,
+    .m68k_rotary_msb_cs,
 
     .input_p2_cs,
     .input_p1_cs,
