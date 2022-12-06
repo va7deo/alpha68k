@@ -192,7 +192,7 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_MIX = 0;
-assign LED_USER =  0 ;// | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
+assign LED_USER =  | {cfg,dsw_sp85,dsw_m68k,coin_ratio_a,coin_ratio_b} ;// | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
 assign LED_DISK = 0;
 assign LED_POWER = 0;
 assign BUTTONS = 0;
@@ -321,11 +321,47 @@ wire [24:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 wire  [7:0] ioctl_din;
 
-reg   [3:0]   pcb;
+reg   [3:0] pcb;
+reg   [7:0] cfg;
+
+localparam SKYADV      = 0;
+localparam GANGWARS    = 1;
+localparam SBASEBALJ   = 2;
+localparam SBASEBAL    = 3;
+localparam SKYADVU     = 4;
+
+localparam SKYSOLDR    = 5;
+localparam TIMESOLD    = 6;
+localparam BATFIELD    = 7;
+
+localparam GOLDMEDL    = 8;
+
+reg [1:0] board_rev ;
+reg [1:0] mcu_type  ; 
+reg       coin_type ;
+reg       invert_in ;
+
+//-- board config 6 bits
+//        00 = II
+//        01 = III
+//        11 = V
+//mcu id  00 = don't care
+//        01 = 0x8814
+//        10 = 0x8512
+//        11 = 0x8713
+//coin     0 = 0x2222 / 1 = 0x2423
+//invert   0 = input not inverted / 1 = inverted
 
 always @(posedge clk_sys) begin
-    if (ioctl_wr && (ioctl_index==1)) begin
-        pcb <= ioctl_dout;
+    if (ioctl_wr && ioctl_index==1) begin
+        if ( ioctl_addr == 0) begin
+            pcb <= ioctl_dout;
+        end else if (ioctl_addr == 1) begin
+            board_rev = ioctl_dout[5:4];
+            mcu_type  = ioctl_dout[3:2]; 
+            coin_type = ioctl_dout[1];
+            invert_in = ioctl_dout[0];
+        end
     end
 end
 
@@ -336,30 +372,68 @@ reg [7:0] p1;
 reg [7:0] p2;
 reg [3:0] p3;
 reg [3:0] p4;
-reg [15:0] dsw1;
-reg [15:0] dsw2;
-reg [15:0] coin;
+reg [7:0] dsw_m68k;
+reg [7:0] dsw_sp85;
+reg [7:0] coin;
 reg flip_dip ;
 
-//reg invert_input;
-//wire [7:0] invert_mask = { 8 {invert_input} } ;
 
-always @ (posedge clk_sys ) begin 
-    p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
+always @ (posedge clk_sys ) begin
     
-    p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
-    
-    coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
-    if ( pcb < 6 || pcb == 8 ) begin
-        dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
-        dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
+    if ( pcb == GOLDMEDL ) begin
+        // special case gold medal
+        // controls are active low
+        p1   <=  { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]} ;
+        p2   <=  { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]} ;
+        
+        dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};  
+        dsw_sp85 <=   {sw[1][7:0] }; 
+    end else if ( invert_in == 0 ) begin
+        // non inverted - active low
+        p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
+        p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
+        
+        if ( board_rev == 3 ) begin
+            // Rev V
+            dsw_m68k <=  {sw[1][7:2], ~key_test, ~key_service};  // IN3 
+            dsw_sp85 <=  {sw[0][7:0] };                        // IN4 
+        end else begin
+            // Rev II & III
+            dsw_m68k <=  {sw[0][7:2], ~key_test, ~key_service};  
+            dsw_sp85 <=  {sw[1][7:0] }; 
+        end
     end else begin
-        dsw1 <=  {8'h00, ~sw[0][7:2], key_test,key_service };  // 
-        dsw2 <=  {8'h00, ~sw[1][7:0] };  // sw[1][1:0] not used? debugging
+        // inverted - active high
+        p1   <=  { start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up} ;
+        p2   <=  { start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up} ;
+        
+        if ( board_rev == 3 ) begin
+            // Rev V
+            dsw_m68k <=  ~{sw[1][7:2], ~key_test, ~key_service};  
+            dsw_sp85 <=  sw[0][7:0] ;  
+        end else begin
+            // Rev II & III
+            // TIMESOLD
+            dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};  
+            dsw_sp85 <=  sw[1][7:0] ;  
+        end
     end
     
-    flip_dip <= ~dsw2[4] ;
-
+    if ( board_rev == 0 ) begin
+        flip_dip <= dsw_m68k[2] ;
+    end else begin
+        if ( pcb == SBASEBALJ || pcb == SBASEBAL ) begin
+            flip_dip <= 0;
+        end else begin
+            flip_dip <= ~dsw_sp85[4] ;
+        end
+    end
+    
+    if ( pcb == GOLDMEDL ) begin
+        coin <=  { 2'b0, coin_b, coin_a, 2'b0, key_test, key_service } ;
+    end else begin
+        coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
+    end
 end
 
 wire        p1_right;
@@ -374,38 +448,101 @@ wire        p2_down;
 wire        p2_up;
 wire [2:0]  p2_buttons;
 
+wire        p3_right;
+wire        p3_left;
+wire        p3_down;
+wire        p3_up;
 wire [2:0]  p3_buttons;
 
+wire        p4_right;
+wire        p4_left;
+wire        p4_down;
+wire        p4_up;
 wire [2:0]  p4_buttons;
 
 reg         p1_swap;
 
 always @ * begin
-    p1_right   <= joy0[0] | key_p1_right;
-    p1_left    <= joy0[1] | key_p1_left;
-    p1_down    <= joy0[2] | key_p1_down;
-    p1_up      <= joy0[3] | key_p1_up;
-    p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+    
+    p1_swap <= status[38];
 
-    p2_right   <= joy1[0] | key_p2_right;
-    p2_left    <= joy1[1] | key_p2_left;
-    p2_down    <= joy1[2] | key_p2_down;
-    p2_up      <= joy1[3] | key_p2_up;
-    p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+    if ( pcb == GOLDMEDL ) begin
+        p1_right   <= 0;
+        p1_left    <= 0;
+        p1_down    <= 0;
+        p1_up      <= 0;
+        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-    p3_buttons <= joy2[6:4];
+        p2_right   <= 0;
+        p2_left    <= 0;
+        p2_down    <= 0;
+        p2_up      <= 0;
+        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-    p4_buttons <= joy3[6:4];
+        p3_right   <= 0;
+        p3_left    <= 0;
+        p3_down    <= 0;
+        p3_up      <= 0;
+        p3_buttons <= joy2[6:4];
+
+        p4_right   <= 0;
+        p4_left    <= 0;
+        p4_down    <= 0;
+        p4_up      <= 0;
+        p4_buttons <= joy3[6:4];
+    end else begin
+        if ( status[38] == 0 ) begin
+            p1_right   <= joy0[0] | key_p1_right;
+            p1_left    <= joy0[1] | key_p1_left;
+            p1_down    <= joy0[2] | key_p1_down;
+            p1_up      <= joy0[3] | key_p1_up;
+            p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+            p2_right   <= joy1[0] | key_p2_right;
+            p2_left    <= joy1[1] | key_p2_left;
+            p2_down    <= joy1[2] | key_p2_down;
+            p2_up      <= joy1[3] | key_p2_up;
+            p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        end else begin
+            p2_right   <= joy0[0] | key_p1_right;
+            p2_left    <= joy0[1] | key_p1_left;
+            p2_down    <= joy0[2] | key_p1_down;
+            p2_up      <= joy0[3] | key_p1_up;
+            p2_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+
+            p1_right   <= joy1[0] | key_p2_right;
+            p1_left    <= joy1[1] | key_p2_left;
+            p1_down    <= joy1[2] | key_p2_down;
+            p1_up      <= joy1[3] | key_p2_up;
+            p1_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        end
+    end
 end
 
-wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
-wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
-wire        start3  = joy2[7]  | key_start_3p;
-wire        start4  = joy3[8]  | key_start_4p;
-wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
-wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
-wire        b_pause = joy0[11] | key_pause;
-wire        service = joy0[12] | key_test;
+wire start1;
+wire start2;
+wire start3;
+wire start4;
+wire coin_a;
+wire coin_b;
+wire b_pause;
+wire service;
+
+always @ * begin
+    if ( pcb == GOLDMEDL ) begin
+        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+        start3  = joy0[12] | joy1[12] | joy2[12] | joy3[12] | key_start_3p;
+        start4  = joy0[13] | joy1[13] | joy2[13] | joy3[13] | key_start_4p;
+    end else begin
+        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
+        coin_b  = joy0[10] | joy1[10] | key_coin_b;
+        b_pause = joy0[11] | key_pause;
+        service = key_test;
+    end
+end
 
 // Keyboard handler
 
@@ -512,8 +649,8 @@ wire rot2_ccw = joy1[13] | key_ls30_p2[1];
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
-        rotary1 <= 12'h1 ;
-        rotary2 <= 12'h1 ;
+        rotary1 <= 12'h800 ;
+        rotary2 <= 12'h800 ;
     end else begin
         if ( p1_rotary_controller_type == 0 ) begin
             // did the button state change?
@@ -618,7 +755,7 @@ always @ (posedge clk_sys) begin
 
     // fractional divider 20MHz from 72
     if ( pause_cpu == 0 ) begin
-        if ( pcb < 5 ) begin
+        if ( board_rev == 3 ) begin
             clk_20M <= 0;
             if ( clk20_count > 17 ) begin
                 clk_20M <= 1 ;
@@ -766,13 +903,8 @@ reg  [31:0] spr_pix_data_fifo;
 
 reg   [8:0] x;
 
-//wire  [8:0] sp_x    = x ;
-//wire  [8:0] sp_y    = vc ^ { 8 { flip_dip } };
-//wire  [8:0] sp_y    = vc;
-
 wire  [8:0] sp_x    = x ;
 wire  [8:0] sp_y    = vc ^ { 8 { flip_dip } };
-//wire  [8:0] sp_y    = vc ;
 
 wire  [9:0] fg_tile = { sp_x[7:3], sp_y[7:3] };
 
@@ -799,7 +931,18 @@ wire  [3:0] spr_pen = { spr_pix_data[24 + { 3 { sprite_flip_x } } ^ spr_x_ofs[2:
                         spr_pix_data[ 8 + { 3 { sprite_flip_x } } ^ spr_x_ofs[2:0]], 
                         spr_pix_data[ 0 + { 3 { sprite_flip_x } } ^ spr_x_ofs[2:0]] }  ;
 
-//reg [3:0] sprite_col_idx_flipped ;
+//-- board config 6 bits
+//        00 = II
+//        01 = III
+//        11 = V
+//mcu id  00 = don't care
+//        01 = 0x8814
+//        10 = 0x8512
+//        11 = 0x8713
+//coin     0 = 0x2222 / 1 = 0x2423
+//invert   0 = input not inverted / 1 = inverted
+
+reg [7:0] config_bits ; // [8:0] = '{ 8'h30, 8'h30, 8'h30, 8'h30, 8'h00, 8'h00, 8'h04, 8'h22 }; 
 
 reg   [11:0] sp_count ;
 
@@ -827,7 +970,7 @@ always @ (posedge clk_sys) begin
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
             // [15:0] fg_rom_addr
-            if ( pcb < 5 ) begin
+            if ( board_rev == 3 ) begin
                 fg_rom_addr <= { tile_bank[2:0], fg_ram_dout[7:0], ~sp_x[2], sp_x[1], sp_y[2:0] } ;
             end else begin
                 fg_rom_addr <= { tile_bank[6:4], fg_ram_dout[7:0], ~sp_x[2], sp_y[2:0], 1'b0 } ;
@@ -849,7 +992,7 @@ always @ (posedge clk_sys) begin
         end else if ( tile_state == 7) begin 
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_fg_w <= 1;
-            if ( pcb < 5 ) begin
+            if ( board_rev == 3 ) begin
                 case ( sp_x[0] )
                     0: line_buf_fg_din <= { fg_colour, pix_data[3:0] } ; 
                     1: line_buf_fg_din <= { fg_colour, pix_data[7:4] } ; 
@@ -935,7 +1078,7 @@ always @ (posedge clk_sys) begin
             end
             // y valid
             
-            sprite_col_y <= sprite_ram_dout ; // + sprite_col_adj
+            sprite_col_y <= sprite_ram_dout ; 
             sprite_state <= 18;
         end else if ( sprite_state == 18 )  begin   
             if ( sprite_layer == 0 ) begin
@@ -961,7 +1104,7 @@ always @ (posedge clk_sys) begin
             sprite_state <= 8;
         end else if ( sprite_state == 8 ) begin
             // tile colour ready
-            if ( pcb < 5 ) begin
+            if ( board_rev == 3 ) begin
                 sprite_colour <= sprite_ram_dout[7:0] ; // 0xff
             end else begin
                 sprite_colour <= sprite_ram_dout[6:0] ; // 0x7f
@@ -969,11 +1112,11 @@ always @ (posedge clk_sys) begin
             sprite_state <= 9;
         end else if ( sprite_state == 9 ) begin
             // tile index ready
-            if ( pcb == 0 || pcb == 4 ) begin
+            if ( pcb == SKYADV || pcb == SKYADVU ) begin
                 sprite_flip_x   <= 1'b0;  
                 sprite_flip_y   <= sprite_ram_dout[15] ;
                 sprite_tile_num <= sprite_ram_dout[14:0] ; 
-            end else if ( pcb == 1 ) begin
+            end else if (  pcb == GANGWARS ) begin
                 sprite_flip_x   <= sprite_ram_dout[15] ;
                 sprite_flip_y   <= 1'b0;  // 0x8000
                 sprite_tile_num <= sprite_ram_dout[14:0] ;
@@ -986,8 +1129,6 @@ always @ (posedge clk_sys) begin
             spr_x_pos <= { sprite_col_x[7:0], sprite_col_y[15] } ;
             sprite_state <= 10;
         end else if ( sprite_state == 10 )  begin    
-            //long addr = (t << 7) + (((dx & 0x8) != 0) ? 0 : 64) + (dy * 4);
-            // sprite_rom_addr <= { tile[10:0], ~dx[3], dy[3:0] } ;
             case ( sprite_flip_y )
                 1'b0: sprite_rom_addr <= { sprite_tile_num, ~sprite_flip_x,  sprite_col_idx[3:0] } ; // ~(sprite_flip_x^spr_x_ofs[3])
                 1'b1: sprite_rom_addr <= { sprite_tile_num, ~sprite_flip_x, ~sprite_col_idx[3:0] } ;
@@ -1022,7 +1163,7 @@ always @ (posedge clk_sys) begin
                 //
                 spr_buf_addr_w <= { vc[0], spr_x_pos };
                 
-                spr_buf_w <= (| spr_pen ) ; // | ~( | sprite_layer )  ; // don't write if 0 - transparent
+                spr_buf_w <= (| spr_pen ) ; // don't write if 0 - transparent
 
                 spr_buf_din <= { sprite_colour, spr_pen };
 
@@ -1091,17 +1232,17 @@ always @ (posedge clk_sys) begin
     tile_pal_wr <= 0;
 
     if ( hc < 257 ) begin
-        if ( clk6_count == 1 ) begin
-            line_buf_addr_r <= { ~vc[0], 1'b0, hc[7:0] ^ { 8 { flip_dip } } } ; //( flip_dip == 0 ) ? hc[7:0] : ~hc[7:0] };
-        end else if ( clk6_count == 2 ) begin
+        if ( clk6_count == 2 ) begin
+            line_buf_addr_r <= { ~vc[0], 1'b0, hc[7:0] ^ { 8 { flip_dip } } } ; 
+        end else if ( clk6_count == 3 ) begin
             fg <= line_buf_fg_out[11:0] ;
             sp <= spr_buf_dout[11:0] ;
-        end else if ( clk6_count == 3 ) begin
+        end else if ( clk6_count == 4 ) begin
             pen <= ( { fg[8], fg[3:0] } == 0 ) ? sp[11:0] : { 3'b0, fg[7:0] };  //   fg[8] == 1 means tile is opaque 
             //pen <= sp[11:0] ;
-        end else if ( clk6_count == 4 ) begin
+        end else if ( clk6_count == 5 ) begin
             if ( pen[3:0] == 0 ) begin
-                if ( pcb < 5 ) begin
+                if ( board_rev == 3 ) begin
                     tile_pal_addr <= 12'hfff ; // background pen
                 end else begin
                     tile_pal_addr <= 12'h7ff ; // background pen
@@ -1109,17 +1250,16 @@ always @ (posedge clk_sys) begin
             end else begin
                 tile_pal_addr <= pen[11:0] ;
             end
-        end else if ( clk6_count == 6 ) begin
+        end else if ( clk6_count == 7 ) begin
             r_pal <= { tile_pal_dout[15], tile_pal_dout[11:8] , tile_pal_dout[14] };
             g_pal <= { tile_pal_dout[15], tile_pal_dout[7:4]  , tile_pal_dout[13] };
             b_pal <= { tile_pal_dout[15], tile_pal_dout[3:0]  , tile_pal_dout[12] };
-        end else if ( clk6_count == 7 ) begin
+        end else if ( clk6_count == 8 ) begin
             rgb <= {dac_weight[r_pal], dac_weight[g_pal], dac_weight[b_pal] };
         end
     end
 end
 
-reg spr_flip_orientation ;
 reg [7:0] tile_bank;
 reg [1:0] vbl_sr;
 reg [1:0] hbl_sr;
@@ -1128,9 +1268,18 @@ reg [7:0] credits;
 reg [3:0] coin_count;
 reg [1:0] coin_latch;
 
+// Coin tables for games with MCU id 2222
 
-reg [7:0] coin_ratio_a [0:7] = '{ 8'h01, 8'h05, 8'h03, 8'h13, 8'h02, 8'h06, 8'h04, 8'h22 };  // (#coins-1) / credits
-reg [7:0] coin_ratio_b [0:7] = '{ 8'h01, 8'h41, 8'h21, 8'h61, 8'h11, 8'h51, 8'h31, 8'h71 };
+// Time Soldiers, Sky Soldiers
+reg [7:0] coin_ratio_a_II [0:7] = '{ 8'h01, 8'h02, 8'h03, 8'h04, 8'h05, 8'h06, 8'h13, 8'h22 };  // (#coins-1) / credits
+reg [7:0] coin_ratio_b_II [0:7] = '{ 8'h01, 8'h11, 8'h21, 8'h31, 8'h41, 8'h51, 8'h61, 8'h71 };  // (#coins-1) / credits
+   
+// Sky Adventure
+reg [7:0] coin_ratio_a_V [0:7] = '{ 8'h01, 8'h05, 8'h03, 8'h13, 8'h02, 8'h06, 8'h04, 8'h22 };  // (#coins-1) / credits
+reg [7:0] coin_ratio_b_V [0:7] = '{ 8'h01, 8'h41, 8'h21, 8'h61, 8'h11, 8'h51, 8'h31, 8'h71 };  // (#coins-1) / credits
+
+wire [7:0] coin_ratio_a = (board_rev != 3) ? coin_ratio_a_II[dsw_sp85[2:0]] : coin_ratio_a_V[~dsw_sp85[3:1]];
+wire [7:0] coin_ratio_b = (board_rev != 3) ? coin_ratio_b_II[dsw_sp85[2:0]] : coin_ratio_b_V[~dsw_sp85[3:1]];
 
 reg [12:0]  mcu_addr;
 reg  [7:0]  mcu_din;
@@ -1156,7 +1305,6 @@ always @ (posedge clk_sys) begin
         
         z80_irq_n <= 1 ;
         m68k_latch <= 0;
-        spr_flip_orientation <= 0;
         tile_bank <= 0;
         frame_count <= 0;
         
@@ -1220,33 +1368,29 @@ always @ (posedge clk_sys) begin
                              m68k_fg_ram_cs ? m68k_fg_ram_dout :
                              m68k_pal_cs ? m68k_pal_dout :
                              input_p1_cs ? { p2, p1 } :
-                             input_dsw1_cs ? dsw1 :
+                             m68k_dsw_cs ? { rotary1[7:0], dsw_m68k[7:0] } :
                              m68k_sp85_cs ? 0 : 
-                             m68k_rotary1_cs ? ~{ rotary1[11:4], 8'h0 } :
-                             m68k_rotary2_cs ? ~{ rotary2[11:4], 8'h0 } :
+                             m68k_rotary2_cs ? { rotary2[7:0], 8'h0 } :
+                             m68k_rotary_msb_cs ? { rotary2[11:8], rotary1[11:8], 8'h0 } :
                              16'h0000;
-
+                             
                 // mcu addresses are word 
                 if ( m68k_sp85_cs == 1 ) begin
                     if (  mcu_busy == 0 ) begin
                         mcu_busy <= 1;
                         if ( m68k_a[8:1] == 8'h00 ) begin
-                            
-                            if ( pcb == 0 || pcb == 2 || pcb == 4 ) begin
-                                // sky adv / baseball
-                                mcu_addr <= 13'h0000;
-                            end else begin
-                                // gang wars
-                                mcu_addr <= 13'h1f00;
-                            end
-                            mcu_din <= dsw2 ;
+
+                            mcu_addr <= m68k_a[13:1];
+                            mcu_din <= dsw_sp85[7:0] ;
                             mcu_wl <= 1;
                         end else if ( m68k_a[8:1] == 8'h22 ) begin
-                            mcu_addr <= 13'h0022;
+                        
+                            mcu_addr <= m68k_a[13:1];
                             mcu_din <= credits ;
                             credits <= 0;
                             mcu_wl <= 1;
                         end else if ( m68k_a[8:1] == 8'h29 ) begin
+                        
                             // coins
                             if ( { coin_b, coin_a } == 0 ) begin
                                 coin_latch <= 0;
@@ -1256,29 +1400,27 @@ always @ (posedge clk_sys) begin
                                 mcu_wl <= 1;
                             end else if ( coin_latch == 0 ) begin
                                 coin_latch <= { coin_b, coin_a };
-
                                 // set coin id
-                                if ( pcb == 0 || pcb > 3 ) begin // 0, 4, 5, 6, 7
-                                    if ( pcb > 3 ) begin // 4, 5, 6, 7
-                                        if ( coin_a == 1 ) begin
-                                            mcu_din <= 8'h23 ;
-                                        end else begin
-                                            mcu_din <= 8'h24 ;
-                                        end
-                                    end else begin
-                                        mcu_din <= 8'h22 ;
-                                    end
-                                    
+                                if ( coin_type == 1 ) begin 
                                     if ( coin_a == 1 ) begin
-                                        if ( coin_ratio_a[ ~dsw2[3:1] ][7:4] == coin_count ) begin
-                                            credits <= coin_ratio_a[ ~dsw2[3:1] ][3:0];
+                                        mcu_din <= 8'h23 ;
+                                    end else begin
+                                        mcu_din <= 8'h24 ;
+                                    end
+                                end else begin
+                                    mcu_din <= 8'h22 ;
+                                    // only games with coin id 22 needs a coin counter
+                                    if ( coin_a == 1 ) begin
+                                        // calc before or after invert?
+                                        if ( coin_ratio_a[7:4] == coin_count ) begin
+                                            credits <= coin_ratio_a[3:0];
                                             coin_count <= 0;
                                         end else begin
                                             coin_count <= coin_count + 1;
                                         end
                                     end if ( coin_b == 1 ) begin 
-                                        if ( coin_ratio_b[ ~dsw2[3:1] ][7:4] == coin_count ) begin
-                                            credits <= coin_ratio_b[ ~dsw2[3:1] ][3:0];
+                                        if ( coin_ratio_b[7:4] == coin_count ) begin
+                                            credits <= coin_ratio_b[3:0];
                                             coin_count <= 0;
                                         end else begin
                                             coin_count <= coin_count + 1;
@@ -1287,17 +1429,9 @@ always @ (posedge clk_sys) begin
                                     
                                     // clear for sky adv
                                     mcu_2nd_write <= 1;
-                                    mcu_2nd_addr  <= 13'h0022 ;
+                                    mcu_2nd_addr  <= m68k_a[13:1] - 7 ;
                                     mcu_2nd_din   <= 0 ;
                                     mcu_2nd_wl    <= 1;
-
-                                end else if ( pcb == 1 || pcb == 2 ) begin
-                                    // slot a/b values
-                                    if ( coin_a == 1 ) begin
-                                        mcu_din <= 8'h23 ;
-                                    end else begin
-                                        mcu_din <= 8'h24 ;
-                                    end
                                 end
                                 mcu_addr <= m68k_a[13:1];
                                 mcu_wl <= 1;
@@ -1308,47 +1442,37 @@ always @ (posedge clk_sys) begin
                             end
                             
                             // if gang wars trigger writing the dip value to ram
-                            if ( pcb == 1 ) begin
+                            if ( pcb == GANGWARS ) begin
                                 mcu_2nd_write <= 1;
                                 mcu_2nd_addr  <= 13'h0163 ;
-                                mcu_2nd_din   <= dsw2 ;
+                                mcu_2nd_din   <= dsw_sp85[7:0] ;
                                 mcu_2nd_wh    <= 1;
                             end
                         end else if ( m68k_a[8:1] == 8'hfe ) begin
                             // mcu id hign - gang wars 8512
-                            if ( pcb == 0 ) begin
-                                mcu_addr <= 13'h00fe;
+                            mcu_addr <= m68k_a[13:1];
+                            mcu_wl <= 0;
+                            if ( mcu_type == 2'b01 ) begin
                                 mcu_din <= 8'h88 ;
                                 mcu_wl <= 1;
-                            end else if ( pcb == 1 ) begin
-                                mcu_addr <= 13'h1ffe;
+                            end else if ( mcu_type == 2'b10 ) begin
                                 mcu_din <= 8'h85 ;
                                 mcu_wl <= 1;
-                            end else if ( pcb == 2 ) begin
-                                mcu_addr <= 13'h00fe;
-                                mcu_din <= 8'h85 ;
-                                mcu_wl <= 1;
-                            end else if ( pcb > 4 ) begin
-                                mcu_addr <= 13'h00fe;
+                            end else if ( mcu_type == 2'b11 ) begin
                                 mcu_din <= 8'h87 ;
                                 mcu_wl <= 1;
                             end
                         end else if ( m68k_a[8:1] == 8'hff ) begin
                             // mcu id low
-                            if ( pcb == 0 ) begin
-                                mcu_addr <= 13'h00ff;
+                            mcu_addr <= m68k_a[13:1];
+                            mcu_wl <= 0;
+                            if ( mcu_type == 2'b01 ) begin
                                 mcu_din <= 8'h14 ;
                                 mcu_wl <= 1;
-                            end else if ( pcb == 1 ) begin
-                                mcu_addr <= 13'h1fff;
+                            end else if ( mcu_type == 2'b10 ) begin
                                 mcu_din <= 8'h12 ;
                                 mcu_wl <= 1;
-                            end else if ( pcb == 2 ) begin
-                                mcu_addr <= 13'h00ff;
-                                mcu_din <= 8'h12 ;
-                                mcu_wl <= 1;
-                            end else if ( pcb > 4 ) begin
-                                mcu_addr <= 13'h00ff;
+                            end else if ( mcu_type == 2'b11 ) begin
                                 mcu_din <= 8'h13 ;
                                 mcu_wl <= 1;
                             end
@@ -1382,7 +1506,7 @@ always @ (posedge clk_sys) begin
             
                 if ( m68k_latch_cs == 1 ) begin
                     // text tile banking
-                    if ( m68k_uds_n == 0 ) begin // UDS 0x80000
+                    if ( m68k_uds_n == 0 && board_rev == 3) begin // UDS 0x80000 only Rev V
                         tile_bank <= m68k_dout[11:8] ;
                     end 
                     if ( m68k_lds_n == 0 ) begin // LDS 0x80001
@@ -1390,12 +1514,10 @@ always @ (posedge clk_sys) begin
                     end
                 end
                 
-                if ( m68k_spr_flip_cs == 1 ) begin
-                    spr_flip_orientation <= m68k_dout[2] ;
-                end
- 
-                if ( pcb > 4 && m68k_lds_n == 0 && input_dsw1_cs == 1 ) begin // LDS 0xc00xx
-                    tile_bank[m68k_a[5:3]] <= m68k_a[6] ;  // 
+                if ( m68k_lds_n == 0 && m68k_dsw_cs == 1 ) begin // LDS 0xc00xx
+                    if  ( board_rev != 3 ) begin
+                        tile_bank[m68k_a[5:3]] <= m68k_a[6] ;  // 
+                    end
                 end
 
             end 
@@ -1407,25 +1529,17 @@ always @ (posedge clk_sys) begin
             
             if ( z80_rd_n == 0 ) begin
                 // Z80 READ
-
                 if ( z80_banked_cs == 1 ) begin
-                    // testing -- most of attract runs from bank 2
-//                    if ( z80_bank == 2 ) begin
-//                        z80_din <= z80_rom_2_data;
-//                    end else begin
-                        if ( z80_banked_valid ) begin
-                            z80_din <= z80_banked_data;
-                        end else begin
-                            z80_wait_n <= 0;
-                        end
-//                    end
+                    if ( z80_banked_valid ) begin
+                        z80_din <= z80_banked_data;
+                    end else begin
+                        z80_wait_n <= 0;
+                    end
                 end else if ( z80_ram_cs == 1 ) begin
                     z80_din <= z80_ram_data ;
                 end else if ( z80_rom_cs == 1 ) begin
                     z80_din <= z80_rom_data ;
                 end else if ( z80_latch_cs == 1 ) begin
-                    // z80_din <= ( pcb == 1 && m68k_latch == 8'h81 ) ? 8'h7e : m68k_latch ;
-                    // z80_din <= m68k_latch ;
                     z80_din <= ( kill_laugh == 1 && m68k_latch == 8'h81 ) ? 8'h00 : m68k_latch ;
                 end  
             end
@@ -1433,7 +1547,6 @@ always @ (posedge clk_sys) begin
             // WRITE
 
             opn_wr <= 0 ;
-//            opll_wr <= 0 ;
             
             // DAC
             if ( z80_dac_cs == 1 ) begin
@@ -1445,7 +1558,6 @@ always @ (posedge clk_sys) begin
                 opll_data  <= z80_dout;
 
                 opll_addr <= z80_addr[0] ;
-//                opll_wr <= 1;
             end 
 
             // OPN YM2203
@@ -1488,20 +1600,16 @@ wire    m68k_spr_cs;
 wire    m68k_fg_ram_cs;
 wire    m68k_spr_flip_cs;
 wire    input_p1_cs;
-wire    input_p2_cs;
-wire    m68k_rotary1_cs;
 wire    m68k_rotary2_cs;
-wire    input_dsw1_cs;
-wire    input_dsw2_cs;
+wire    m68k_rotary_msb_cs;
+wire    m68k_dsw_cs;
 wire    irq_z80_cs;
-wire    m_invert_ctrl_cs;
 wire    m68k_latch_cs;
 wire    z80_latch_read_cs;
 wire    vbl_int_clr_cs;
 wire    cpu_int_clr_cs;
 wire    watchdog_clr_cs;
 wire    m68k_sp85_cs;
-wire    m68k_coin_cs;
 
 wire    z80_rom_cs;
 wire    z80_ram_cs;
@@ -1540,14 +1648,11 @@ chip_select cs (
     .m68k_fg_ram_cs,
     .m68k_pal_cs,
 
-    .m68k_rotary1_cs,
     .m68k_rotary2_cs,
+    .m68k_rotary_msb_cs,
 
-    .input_p2_cs,
     .input_p1_cs,
-    .input_dsw1_cs,
-    .input_dsw2_cs,
-    .m68k_coin_cs,
+    .m68k_dsw_cs,
 
     // interrupt clear & watchdog
     .vbl_int_clr_cs,
