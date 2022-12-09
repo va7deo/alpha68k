@@ -18,17 +18,17 @@ The intent is for this core to be a 1:1 playable implementation of Alpha Denshi 
 
 | Title | PCB<br>Number | Status  | Released | ROM Set |
 |-------|---------------|---------|----------|---------|
-| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged set |
-| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)   | ALPHA-68K96V (GW)  | Implemented | Yes | .249 (**sbasebalj** only) |
-| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                       | ALPHA-68K96V (GW)  | Implemented | Yes | .249 merged set |
-| [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers)<br>Time Soldiers   | ALPHA-68K96II (SS) | Implemented | No | .249 merged set |
-| [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                       | ALPHA-68K96II (SS) | Implemented | No | .249 merged set |
-| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                       | ALPHA-68K96II (SS) | Implemented | No | .249 (**goldmedl** only) |
-| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)                         | ALPHA-68K96I       | **W.I.P**   | No | N/A |
-| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space)                     | A8004-1            | **W.I.P**   | No | N/A |
-| [**Super Stingray**](https://segaretro.org/Super_Stingray)                           | N/A                | **W.I.P**   | No | N/A |
-| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/)             | N/A                | **W.I.P**   | No | N/A |
-| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)                     | ALPHA-68K96N       | **W.I.P**   | No | N/A |
+| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 merged set |
+| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)   | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 (**sbasebalj** only) |
+| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                       | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 merged set |
+| [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers)<br>Time Soldiers      | ALPHA-68K96II (SS) | Implemented                | Yes | .249 merged set |
+| [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                       | ALPHA-68K96II (SS) | Implemented                | Yes | .249 merged set |
+| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                       | ALPHA-68K96II (SS) | Implemented                | No | .249 (**goldmedl** only) |
+| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)                         | ALPHA-68K96I       | **W.I.P**                  | No | N/A |
+| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space)                     | A8004-1            | **Separate<br>Repository** | No | N/A |
+| [**Super Stingray**](https://segaretro.org/Super_Stingray)                           | N/A                | **W.I.P**                  | No | N/A |
+| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/)             | N/A                | **W.I.P**                  | No | N/A |
+| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)                     | ALPHA-68K96N       | **W.I.P**                  | No | N/A |
 
 ## External Modules
 
@@ -44,12 +44,14 @@ The intent is for this core to be a 1:1 playable implementation of Alpha Denshi 
 
 - Dump M68705 (SP85N / ALPHA-8511 ) MCU from Sky Adventure (Bootleg) [Task]  
 - Dump ROMs from Sky Adventure Bootleg and submit to mamedev [Task]  
-- Add P3/P4 inputs for Gold Medalist [Task]  
+- Dump ROMs from Gold Medalist and submit to mamedev [Task]  
+- ~~Add P3/P4 inputs for Gold Medalist~~ [Task]  
 - ~~Add rotary input for Time Soldiers~~ [Task]  
 - ~~GFX decode and palette display for ALPHA-68K96II~~ [Task]  
 - ~~Verify clocks on ALPHA-68K96II hardware; MAME is incorrect~~ [Task]  <br><br>
-- Options removed currently until stability is checked, may be tied to RESET line [Issue]  
+- ~~Options removed currently until stability is checked, may be tied to RESET line~~ [Issue]  
 - Super Champion Baseball (sbasebal) freezes due to MCU ROM code (no dump) [Issue]  
+- Awaiting Gold Medalist PCB to verify and release; submit new ROM dump for bad ROMs [Issue]  
 
 # PCB Check List
 
@@ -148,7 +150,7 @@ LS-30 Rotary Encoder | RP2040 | Wired USB | 1ms | 2241 | 95.52% | 0.747 ms | 2e8
 
 ### Gang Wars Options
 
-- There is a toggle to swap inputs from Player 1 to Player 2 in Debug Settings. This will enable you to play as Jackie in Gang Wars instead of Mike while only having one controller connected. This only swaps inputs for the joystick, it does not effect keyboard inputs.
+- There is a toggle to swap inputs from Player 1 to Player 2 in Debug Settings. This will enable you to play as Jackie in Gang Wars instead of Mike while only having one controller connected. Additionally, you can play as the additional time soldier in バトル フィールド / Time Soldiers. This only swaps inputs for the joystick and rotary control, it does not effect keyboard inputs.
 
 - There is a toggle to disable the laughter from enemies in Gang Wars located in Debug Settings. Enabling this will mute the laughter when an enemy knocks Mike or Jackie down.
 

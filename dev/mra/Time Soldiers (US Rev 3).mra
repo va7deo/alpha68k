@@ -25,7 +25,7 @@
     <buttons names="Shot,Weapon,-,P1 Start,P2 Start,Coin A,Coin B,Pause,Rotate CW,Rotate CCW" default="A,B,X,Y,R,L,Start,Select,R1,L1"/>
 
     <rom index="1">
-        <part>06</part>
+        <part>06 01</part>
     </rom>
 
     <rom index="0" zip="timesold.zip" md5="None">
