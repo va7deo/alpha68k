@@ -359,7 +359,7 @@ always @ (posedge clk_sys ) begin
     end
     coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service } ;
     if ( pcb < 6 || pcb == 8 ) begin
-        dsw1 <=  {8'h00, sw[0][7:2], ~key_test,~key_service };  // 
+        dsw1 <=  {8'h00, ~sw[0][7:2], ~key_test,~key_service };  // 
         dsw2 <=  {8'h00, sw[1][7:0] };  // sw[1][1:0] not used? debugging
     end else begin
         dsw1 <=  {8'h00, ~sw[0][7:2], key_test,key_service };  // 
@@ -598,8 +598,8 @@ end
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
-        rotary1 <= 12'h1 ;
-        rotary2 <= 12'h1 ;
+        rotary1 <= 12'h800;
+        rotary2 <= 12'h800;
     end else begin
         if ( p1_rotary_controller_type == 0 ) begin
             // did the button state change?
