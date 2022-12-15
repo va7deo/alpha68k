@@ -248,9 +248,11 @@ localparam CONF_STR = {
     "-;",
     "P3,Debug Settings;",
     "P3-;",
-    "P3o6,Swap P1/P2 Joystick,Off,On;",
     "P3OI,P1 Rotary Type,Gamepad,LS-30;",
     "P3OJ,P2 Rotary Type,Gamepad,LS-30;",
+    "P3-;",
+    "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3-;",
     "P3o5,GangWars Enemy Laugh,On,Off;",
     "P3-;",
     "DIP;",
@@ -395,7 +397,7 @@ always @ (posedge clk_sys ) begin
         if ( board_rev == 3 ) begin
             // Rev V
             dsw_m68k <=  {sw[1][7:2], ~key_test, ~key_service};  // IN3 
-            dsw_sp85 <=  {sw[0][7:0] };                        // IN4 
+            dsw_sp85 <=  {sw[0][7:0] };                          // IN4 
         end else begin
             // Rev II & III
             dsw_m68k <=  {sw[0][7:2], ~key_test, ~key_service};  
@@ -647,6 +649,9 @@ wire rot2_cw  = joy1[12] | key_ls30_p2[0];
 wire rot2_ccw = joy1[13] | key_ls30_p2[1];
 
 always @ (posedge clk_sys) begin
+
+    p1_swap <= status[38];
+
     if ( reset == 1 ) begin
         rotary1 <= 12'h800 ;
         rotary2 <= 12'h800 ;

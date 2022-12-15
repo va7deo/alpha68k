@@ -25,7 +25,7 @@
     <buttons names="Cannon System,Missle System,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
 
     <rom index="1">
-        <part>05</part>
+        <part>05 00</part>
     </rom>
 
     <rom index="0" zip="skysoldr.zip" md5="None">
