@@ -379,7 +379,6 @@ reg flip_dip ;
 
 
 always @ (posedge clk_sys ) begin
-    
     if ( pcb == GOLDMEDL ) begin
         // special case gold medal
         // controls are active low
@@ -1278,8 +1277,8 @@ reg [7:0] coin_ratio_b_II [0:7] = '{ 8'h01, 8'h11, 8'h21, 8'h31, 8'h41, 8'h51, 8
 reg [7:0] coin_ratio_a_V [0:7] = '{ 8'h01, 8'h05, 8'h03, 8'h13, 8'h02, 8'h06, 8'h04, 8'h22 };  // (#coins-1) / credits
 reg [7:0] coin_ratio_b_V [0:7] = '{ 8'h01, 8'h41, 8'h21, 8'h61, 8'h11, 8'h51, 8'h31, 8'h71 };  // (#coins-1) / credits
 
-wire [7:0] coin_ratio_a = (board_rev != 3) ? coin_ratio_a_II[dsw_sp85[2:0]] : coin_ratio_a_V[~dsw_sp85[3:1]];
-wire [7:0] coin_ratio_b = (board_rev != 3) ? coin_ratio_b_II[dsw_sp85[2:0]] : coin_ratio_b_V[~dsw_sp85[3:1]];
+wire [7:0] coin_ratio_a = (board_rev != 3) ? coin_ratio_a_II[~dsw_sp85[2:0]] : coin_ratio_a_V[~dsw_sp85[3:1]];
+wire [7:0] coin_ratio_b = (board_rev != 3) ? coin_ratio_b_II[~dsw_sp85[2:0]] : coin_ratio_b_V[~dsw_sp85[3:1]];
 
 reg [12:0]  mcu_addr;
 reg  [7:0]  mcu_din;
