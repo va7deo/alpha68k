@@ -643,15 +643,30 @@ reg last_rot2_ccw ;
 wire p1_rotary_controller_type = status[18];
 wire p2_rotary_controller_type = status[19];
 
-wire rot1_cw  = joy0[12] | key_ls30_p1[0];
-wire rot1_ccw = joy0[13] | key_ls30_p1[1];
-wire rot2_cw  = joy1[12] | key_ls30_p2[0];
-wire rot2_ccw = joy1[13] | key_ls30_p2[1];
+wire rot1_cw;
+wire rot1_ccw;
+wire rot2_cw;
+wire rot2_ccw;
 
-always @ (posedge clk_sys) begin
+always @ * begin
 
     p1_swap <= status[38];
 
+        if ( status[38] == 0 ) begin
+            rot1_cw  = joy0[12] | key_ls30_p1[0];
+            rot1_ccw = joy0[13] | key_ls30_p1[1];
+            rot2_cw  = joy1[12] | key_ls30_p2[0];
+            rot2_ccw = joy1[13] | key_ls30_p2[1];
+        end else begin
+            rot1_cw  = joy1[12] | key_ls30_p2[0];
+            rot1_ccw = joy1[13] | key_ls30_p2[1];
+            rot2_cw  = joy0[12] | key_ls30_p1[0];
+            rot2_ccw = joy0[13] | key_ls30_p1[1];
+        end
+end
+
+always @ (posedge clk_sys) begin
+	
     if ( reset == 1 ) begin
         rotary1 <= 12'h800 ;
         rotary2 <= 12'h800 ;

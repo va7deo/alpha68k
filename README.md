@@ -18,17 +18,17 @@ The intent is for this core to be a 1:1 playable implementation of Alpha Denshi 
 
 | Title | PCB<br>Number | Status  | Released | ROM Set |
 |-------|---------------|---------|----------|---------|
-| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 merged set |
-| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)   | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 (**sbasebalj** only) |
-| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                       | ALPHA-68K96V (GW)  | Implemented                | Yes | .249 merged set |
-| [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers)<br>Time Soldiers      | ALPHA-68K96II (SS) | Implemented                | Yes | .249 merged set |
-| [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                       | ALPHA-68K96II (SS) | Implemented                | Yes | .249 merged set |
-| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                       | ALPHA-68K96II (SS) | Implemented                | No | .249 (**goldmedl** only) |
-| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)                         | ALPHA-68K96I       | **W.I.P**                  | No | N/A |
-| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space)                     | A8004-1            | **Separate<br>Repository** | No | N/A |
-| [**Super Stingray**](https://segaretro.org/Super_Stingray)                           | N/A                | **W.I.P**                  | No | N/A |
-| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/)             | N/A                | **W.I.P**                  | No | N/A |
-| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)                     | ALPHA-68K96N       | **W.I.P**                  | No | N/A |
+| [**Gang Wars**](https://en.wikipedia.org/wiki/Gang_Wars_(video_game))                | ALPHA-68K96V (GW)  | **Implemented**                | **Yes** | .249 merged set |
+| [**Super Champion Baseball**](https://snk.fandom.com/wiki/Super_Champion_Baseball)   | ALPHA-68K96V (GW)  | **Implemented**                | **Yes** | .249 (**sbasebalj** only) |
+| [**Sky Adventure**](https://snk.fandom.com/wiki/Sky_Adventure)                       | ALPHA-68K96V (GW)  | **Implemented**                | **Yes** | .249 merged set |
+| [**バトル フィールド**](https://en.wikipedia.org/wiki/Time_Soldiers)<br>Time Soldiers      | ALPHA-68K96II (SS) | **Implemented**                | **Yes** | .249 merged set |
+| [**Sky Soldiers**](https://en.wikipedia.org/wiki/Sky_Soldiers)                       | ALPHA-68K96II (SS) | **Implemented**                | **Yes** | .249 merged set |
+| [**Gold Medalist**](https://snk.fandom.com/wiki/Gold_Medalist)                       | ALPHA-68K96II (SS) | **Implemented**                | **No**  | .249 (**goldmedl** only) |
+| [**Paddle Mania**](https://snk.fandom.com/wiki/Paddle_Mania)                         | ALPHA-68K96I       | W.I.P                          | No      | N/A |
+| [**The Next Space**](https://snk.fandom.com/wiki/The_Next_Space)                     | A8004-1            | **Separate<br>Repository**     | No      | N/A |
+| [**Super Stingray**](https://segaretro.org/Super_Stingray)                           | N/A                | W.I.P                          | No      | N/A |
+| [**Kyros no Yakata**](http://www.hardcoregaming101.net/kyros-desolator/)             | N/A                | W.I.P                          | No      | N/A |
+| [**Mahjong Block Jongbou**](https://snk.fandom.com/wiki/Jongbou)                     | ALPHA-68K96N       | W.I.P                          | No      | N/A |
 
 ## External Modules
 
