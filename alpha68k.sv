@@ -382,11 +382,11 @@ always @ ( posedge clk_sys ) begin
     if ( pcb == GOLDMEDL ) begin
         // special case gold medal
         // controls are active low
-        p1 <= { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};
-        p2 <= { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};
+        p1 <= { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};    // IN0
+        p2 <= { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};    // IN1
 
-        dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};
-        dsw_sp85 <=   {sw[1][7:0] };
+        dsw_m68k <= ~{sw[0][7:2], ~key_test, ~key_service};
+        dsw_sp85 <= {sw[1][7:0] };
     end else if ( invert_in == 0 ) begin
         // non inverted - active low
         p1 <= ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
@@ -408,13 +408,13 @@ always @ ( posedge clk_sys ) begin
 
         if ( board_rev == 3 ) begin
             // Rev V
-            dsw_m68k <=  ~{sw[1][7:2], ~key_test, ~key_service};
-            dsw_sp85 <=  sw[0][7:0];
+            dsw_m68k <= ~{sw[1][7:2], ~key_test, ~key_service};
+            dsw_sp85 <= sw[0][7:0];
         end else begin
             // Rev II & III
             // TIMESOLD
-            dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};
-            dsw_sp85 <=  sw[1][7:0];
+            dsw_m68k <= ~{sw[0][7:2], ~key_test, ~key_service};
+            dsw_sp85 <= sw[1][7:0];
         end
     end
 
@@ -557,7 +557,7 @@ wire pressed = ps2_key[9];
 reg [11:0] key_ls30_p1;
 reg [11:0] key_ls30_p2;
 
-always @(posedge clk_sys) begin 
+always @(posedge clk_sys) begin
     reg old_state;
 
     old_state <= ps2_key[10];
