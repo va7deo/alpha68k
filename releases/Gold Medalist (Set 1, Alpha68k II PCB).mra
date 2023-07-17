@@ -24,7 +24,7 @@
     <buttons names="Run/Spin/Power,Run/Spin/Hit Power,Jump/Jab/Throw Angle,P1 Start,P2 Start,P3 Start,P4 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start,Select,R1,L1"/>
 
     <rom index="1">
-        <part>07</part>
+        <part>08 1c</part>
     </rom>
 
     <rom index="0" zip="goldmedl.zip" md5="None">

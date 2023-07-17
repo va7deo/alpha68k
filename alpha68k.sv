@@ -377,44 +377,44 @@ reg [7:0] dsw_sp85;
 reg [7:0] coin;
 reg flip_dip;
 
+always @ ( posedge clk_sys ) begin
 
-always @ (posedge clk_sys ) begin
     if ( pcb == GOLDMEDL ) begin
         // special case gold medal
         // controls are active low
-        p1   <=  { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};
-        p2   <=  { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};
+        p1 <= { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};
+        p2 <= { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};
 
-        dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};  
-        dsw_sp85 <=   {sw[1][7:0] }; 
+        dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};
+        dsw_sp85 <=   {sw[1][7:0] };
     end else if ( invert_in == 0 ) begin
         // non inverted - active low
-        p1   <=  ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
-        p2   <=  ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up};
+        p1 <= ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
+        p2 <= ~{ start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up};
 
         if ( board_rev == 3 ) begin
             // Rev V
-            dsw_m68k <=  {sw[1][7:2], ~key_test, ~key_service};  // IN3
-            dsw_sp85 <=  {sw[0][7:0] };                          // IN4
+            dsw_m68k <= {sw[1][7:2], ~key_test, ~key_service};    // IN3
+            dsw_sp85 <= {sw[0][7:0] };                            // IN4
         end else begin
             // Rev II & III
-            dsw_m68k <=  {sw[0][7:2], ~key_test, ~key_service};
-            dsw_sp85 <=  {sw[1][7:0] };
+            dsw_m68k <= {sw[0][7:2], ~key_test, ~key_service};
+            dsw_sp85 <= {sw[1][7:0] };
         end
     end else begin
         // inverted - active high
-        p1   <=  { start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
-        p2   <=  { start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up};
+        p1 <= { start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
+        p2 <= { start2, p2_buttons[2:0], p2_right, p2_left, p2_down, p2_up};
 
         if ( board_rev == 3 ) begin
             // Rev V
             dsw_m68k <=  ~{sw[1][7:2], ~key_test, ~key_service};
-            dsw_sp85 <=  sw[0][7:0];  
+            dsw_sp85 <=  sw[0][7:0];
         end else begin
             // Rev II & III
             // TIMESOLD
             dsw_m68k <=  ~{sw[0][7:2], ~key_test, ~key_service};
-            dsw_sp85 <=  sw[1][7:0];  
+            dsw_sp85 <=  sw[1][7:0];
         end
     end
 
@@ -429,40 +429,40 @@ always @ (posedge clk_sys ) begin
     end
 
     if ( pcb == GOLDMEDL ) begin
-        coin <=  { 2'b0, coin_b, coin_a, 2'b0, key_test, key_service };
+        coin <= { 2'b0, coin_b, coin_a, 2'b0, key_test, key_service };
     end else begin
-        coin <=  ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service };
+        coin <= ~{ 2'b0, coin_b, coin_a, 2'b0, ~key_test, ~key_service };
     end
 end
 
-wire        p1_right;
-wire        p1_left;
-wire        p1_down;
-wire        p1_up;
-wire [2:0]  p1_buttons;
+reg       p1_right;
+reg       p1_left;
+reg       p1_down;
+reg       p1_up;
+reg [2:0] p1_buttons;
 
-wire        p2_right;
-wire        p2_left;
-wire        p2_down;
-wire        p2_up;
-wire [2:0]  p2_buttons;
+reg       p2_right;
+reg       p2_left;
+reg       p2_down;
+reg       p2_up;
+reg [2:0] p2_buttons;
 
-wire        p3_right;
-wire        p3_left;
-wire        p3_down;
-wire        p3_up;
-wire [2:0]  p3_buttons;
+reg       p3_right;
+reg       p3_left;
+reg       p3_down;
+reg       p3_up;
+reg [2:0] p3_buttons;
 
-wire        p4_right;
-wire        p4_left;
-wire        p4_down;
-wire        p4_up;
-wire [2:0]  p4_buttons;
+reg       p4_right;
+reg       p4_left;
+reg       p4_down;
+reg       p4_up;
+reg [2:0] p4_buttons;
 
-reg         p1_swap;
+reg       p1_swap;
 
 always @ * begin
-    
+
     p1_swap <= status[38];
 
     if ( pcb == GOLDMEDL ) begin
@@ -518,14 +518,14 @@ always @ * begin
     end
 end
 
-wire start1;
-wire start2;
-wire start3;
-wire start4;
-wire coin_a;
-wire coin_b;
-wire b_pause;
-wire service;
+reg start1;
+reg start2;
+reg start3;
+reg start4;
+reg coin_a;
+reg coin_b;
+reg b_pause;
+reg service;
 
 always @ * begin
     if ( pcb == GOLDMEDL ) begin
@@ -545,12 +545,12 @@ end
 
 // Keyboard handler
 
-wire key_start_1p, key_start_2p, key_start_3p, key_start_4p, key_coin_a, key_coin_b;
-wire key_tilt, key_test, key_reset, key_service, key_pause;
-//wire key_fg_enable, key_spr_enable;
+reg key_start_1p, key_start_2p, key_start_3p, key_start_4p, key_coin_a, key_coin_b;
+reg key_tilt, key_test, key_reset, key_service, key_pause;
+//reg key_fg_enable, key_spr_enable;
 
-wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
-wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
+reg key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
+reg key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
 
 wire pressed = ps2_key[9];
 
@@ -641,10 +641,10 @@ reg last_rot2_ccw;
 wire p1_rotary_controller_type = status[18];
 wire p2_rotary_controller_type = status[19];
 
-wire rot1_cw;
-wire rot1_ccw;
-wire rot2_cw;
-wire rot2_ccw;
+reg rot1_cw;
+reg rot1_ccw;
+reg rot2_cw;
+reg rot2_ccw;
 
 always @ * begin
 
