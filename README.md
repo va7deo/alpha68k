@@ -53,23 +53,23 @@ FPGA implementation has been verified against [**schematics**](https://github.co
 
 ### Clock Information
 
-| H-Sync      | V-Sync      | Source                 | PCB<br>Number      |
---------------|-------------|------------------------|--------------------|
-| 15.625kHz   | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96V (GW)  |
-| 15.625kHz   | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96II (SS) |
+| H-Sync    | V-Sync      | Source                 | PCB<br>Number      |
+------------|-------------|------------------------|--------------------|
+| 15.625kHz | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96V (GW)  |
+| 15.625kHz | 59.185606Hz | [**DSLogic+**](FILLME) | ALPHA-68K96II (SS) |
 
 ### Crystal Oscillators
 
 - MAME documentation for the Alpha96k.cpp states that ALPHA-68K96II hardware runs the M68000 at 8.00 MHZ. The actual frequency for the M68000 is 9.00 MHZ based on board readings from Sky Soldier.
 
-| Location                | PCB<br>Number      | Freq (MHz) | Use                                                                                          |
-|-------------------------|--------------------|------------|----------------------------------------------------------------------------------------------|
-| X-1  (24 MHZ)           | ALPHA-68K96V (GW)  | 24.000     | Z80 CLK (6MHZ)<br><br>YM2203 (CLK 3 MHZ)<br><br>Sprite CLK (12 MHZ)<br><br>Pixel CLK (6 MHZ) |
-| X-2  (20 MHZ)           | ALPHA-68K96V (GW)  | 20.000     | M68000 CLK (10 MHZ)                                                                          |
-| X-3  (3.579545 MHz)     | ALPHA-68K96V (GW)  | 3.579545   | YM2413 CLK (3.579545 MHz)                                                                    |
-| X-1  (3.579545 MHz)     | ALPHA-68K96II (SS) | 24.000     | YM2413 CLK (3.579545 MHz)                                                                    |
-| X-2  (18 MHZ)           | ALPHA-68K96II (SS) | 18.000     | M68000 CLK (9 MHZ)                                                                           |
-| X-3  (24 MHZ)           | ALPHA-68K96II (SS) | 3.579545   | Z80 CLK (6MHZ)<br><br>YM2203 (CLK 3 MHZ)<br><br>Sprite CLK (12 MHZ)<br><br>Pixel CLK (6 MHZ) |
+| Location            | PCB<br>Number      | Freq (MHz) | Use                                                                                          |
+|---------------------|--------------------|------------|----------------------------------------------------------------------------------------------|
+| X-1  (24 MHZ)       | ALPHA-68K96V (GW)  | 24.000     | Z80 CLK (6MHZ)<br><br>YM2203 (CLK 3 MHZ)<br><br>Sprite CLK (12 MHZ)<br><br>Pixel CLK (6 MHZ) |
+| X-2  (20 MHZ)       | ALPHA-68K96V (GW)  | 20.000     | M68000 CLK (10 MHZ)                                                                          |
+| X-3  (3.579545 MHz) | ALPHA-68K96V (GW)  | 3.579545   | YM2413 CLK (3.579545 MHz)                                                                    |
+| X-1  (3.579545 MHz) | ALPHA-68K96II (SS) | 24.000     | YM2413 CLK (3.579545 MHz)                                                                    |
+| X-2  (18 MHZ)       | ALPHA-68K96II (SS) | 18.000     | M68000 CLK (9 MHZ)                                                                           |
+| X-3  (24 MHZ)       | ALPHA-68K96II (SS) | 3.579545   | Z80 CLK (6MHZ)<br><br>YM2203 (CLK 3 MHZ)<br><br>Sprite CLK (12 MHZ)<br><br>Pixel CLK (6 MHZ) |
 
 **Pixel clock:** 6.00 MHz
 

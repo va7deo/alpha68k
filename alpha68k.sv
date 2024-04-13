@@ -382,8 +382,8 @@ always @ ( posedge clk_sys ) begin
     if ( pcb == GOLDMEDL ) begin
         // special case gold medal
         // controls are active low
-        p1 <= { start1, start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};    // IN0
-        p2 <= { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};    // IN1
+        p1 <= { start1, ~start3, p2_buttons[1], p1_buttons[1], p2_buttons[2], p2_buttons[0], p1_buttons[2], p1_buttons[0]};    // IN0
+        p2 <= { start2, start4, p4_buttons[1], p3_buttons[1], p4_buttons[2], p4_buttons[0], p3_buttons[2], p3_buttons[0]};     // IN1
 
         dsw_m68k <= ~{sw[0][7:2], ~key_test, ~key_service};
         dsw_sp85 <= {sw[1][7:0] };
@@ -491,28 +491,28 @@ always @ * begin
         p4_buttons <= joy3[6:4];
     end else begin
         if ( status[38] == 0 ) begin
-            p1_right   <= joy0[0] | key_p1_right;
-            p1_left    <= joy0[1] | key_p1_left;
-            p1_down    <= joy0[2] | key_p1_down;
-            p1_up      <= joy0[3] | key_p1_up;
+            p1_right   <= joy0[0]   | key_p1_right;
+            p1_left    <= joy0[1]   | key_p1_left;
+            p1_down    <= joy0[2]   | key_p1_down;
+            p1_up      <= joy0[3]   | key_p1_up;
             p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-            p2_right   <= joy1[0] | key_p2_right;
-            p2_left    <= joy1[1] | key_p2_left;
-            p2_down    <= joy1[2] | key_p2_down;
-            p2_up      <= joy1[3] | key_p2_up;
+            p2_right   <= joy1[0]   | key_p2_right;
+            p2_left    <= joy1[1]   | key_p2_left;
+            p2_down    <= joy1[2]   | key_p2_down;
+            p2_up      <= joy1[3]   | key_p2_up;
             p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
         end else begin
-            p2_right   <= joy0[0] | key_p1_right;
-            p2_left    <= joy0[1] | key_p1_left;
-            p2_down    <= joy0[2] | key_p1_down;
-            p2_up      <= joy0[3] | key_p1_up;
+            p2_right   <= joy0[0]   | key_p1_right;
+            p2_left    <= joy0[1]   | key_p1_left;
+            p2_down    <= joy0[2]   | key_p1_down;
+            p2_up      <= joy0[3]   | key_p1_up;
             p2_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-            p1_right   <= joy1[0] | key_p2_right;
-            p1_left    <= joy1[1] | key_p2_left;
-            p1_down    <= joy1[2] | key_p2_down;
-            p1_up      <= joy1[3] | key_p2_up;
+            p1_right   <= joy1[0]   | key_p2_right;
+            p1_left    <= joy1[1]   | key_p2_left;
+            p1_down    <= joy1[2]   | key_p2_down;
+            p1_up      <= joy1[3]   | key_p2_up;
             p1_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
         end
     end

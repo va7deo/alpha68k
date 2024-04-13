@@ -80,7 +80,6 @@ localparam GANGWARS    = 1;
 localparam SBASEBALJ   = 2;
 localparam SBASEBAL    = 3;
 localparam SKYADVU     = 4;
-
 localparam SKYSOLDR    = 5;
 localparam TIMESOLD    = 6;
 localparam BATFIELD    = 7;
