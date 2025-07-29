@@ -21,7 +21,6 @@ set_global_assignment -name MIN_CORE_JUNCTION_TEMP "-40"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-#set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS OFF
 set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING OFF
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 # HIGH PERFORMANCE EFFORT / Balanced 
@@ -318,8 +317,7 @@ set_global_assignment -name VHDL_FILE rtl/mem/sdram.vhd
 set_global_assignment -name VHDL_FILE rtl/mem/dual_port_ram.vhd
 
 set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
-set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS OFF
+set_global_assignment -name LAST_QUARTUS_VERSION "17.0.2 Lite Edition"
 set_global_assignment -name TOP_LEVEL_ENTITY sys_top
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION ALWAYS
 

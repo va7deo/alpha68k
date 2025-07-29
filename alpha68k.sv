@@ -49,12 +49,15 @@ module emu
     output        VGA_VS,
     output        VGA_DE,    // = ~(VBlank | HBlank)
     output        VGA_F1,
-    output [2:0]  VGA_SL,
-    output        VGA_SCALER, // Force VGA scaler
+    output [1:0]  VGA_SL,
+	output        VGA_SCALER, // Force VGA scaler
+	output        VGA_DISABLE, // analog out is off
 
-    input  [11:0] HDMI_WIDTH,
-    input  [11:0] HDMI_HEIGHT,
-    output        HDMI_FREEZE,
+	input  [11:0] HDMI_WIDTH,
+	input  [11:0] HDMI_HEIGHT,
+	output        HDMI_FREEZE,
+	output        HDMI_BLACKOUT,
+	output        HDMI_BOB_DEINT,
 
 `ifdef MISTER_FB
     // Use framebuffer in DDRAM (USE_FB=1 in qsf)
@@ -188,8 +191,11 @@ assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 //assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
 
 assign VGA_F1 = 0;
-assign VGA_SCALER = 0;
+assign VGA_SCALER  = 0;
+assign VGA_DISABLE = 0;
 assign HDMI_FREEZE = 0;
+assign HDMI_BLACKOUT = 0;
+assign HDMI_BOB_DEINT = 0;
 
 assign AUDIO_MIX = 0;
 assign LED_USER =  | {cfg,dsw_sp85,dsw_m68k,coin_ratio_a,coin_ratio_b} ;// | { frame_count, global_count, rom_count, rom_2_count, sprite_count, sound_count, sprite_overrun, sp_count } ;
